@@ -1,4 +1,4 @@
-# Calico Ingress Gateway - Consistent Hash Load Balancing
+# Calico Ingress Gateway - Sticky session with Session Persistence Envoy Route
 
 ### Table of Contents
 
@@ -24,9 +24,11 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 ### Overview
 
-A typical use case for consistent hash load balancing is routing requests from the same client to the same backend pod to maintain session affinity—for example, in a shopping cart or user session scenario.
+Session Persistence allows client requests to be consistently routed to the same backend service instance. This is useful in many scenarios, such as when an application needs to maintain state across multiple requests.
 
-In Kubernetes with Envoy Gateway, consistent hashing can be configured so that requests are distributed based on a hash of a key (like a cookie, HTTP header, or client IP). Envoy calculates the hash and routes each request to a specific backend, ensuring that the same client consistently lands on the same pod, improving cache hit rates and preserving session state.
+In Kubernetes with Envoy Gateway, session persistence can be achieved using a session identifier (e.g., a cookie or header). This ensures that a client’s traffic is consistently routed to the same pod for the duration of the session, preserving user context and improving user experience. 
+
+Use session persistence when your app is stateful and you need explicit control over session lifecycle (e.g., login sessions, sticky shopping carts).
 
 ---
 
@@ -150,7 +152,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
 ### Demo
 
-#### 1. Create a deployment named `Backend` which we will use to test consistent hash load balancing. The deployment will have 10 replicas.
+#### 1. Create a deployment named `Backend` which we will use to test round robin load balancing. The deployment will have 4 replicas.
 
   ```
   kubectl apply -f - <<EOF
@@ -179,7 +181,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   metadata:
     name: backend
   spec:
-    replicas: 10
+    replicas: 4
     selector:
       matchLabels:
         app: backend
@@ -209,14 +211,14 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 2. Create a Gateway resource named "load-balancing-gateway" using the "tigera-gateway-class"
+#### 2. Create a Gateway resource named "sticky-session-gateway" using the "tigera-gateway-class"
 
   ```
   kubectl apply -f - <<EOF
   apiVersion: gateway.networking.k8s.io/v1
   kind: Gateway
   metadata:
-    name: load-balancing-gateway
+    name: sticky-session-gateway
   spec:
     gatewayClassName: tigera-gateway-class
     listeners:
@@ -226,47 +228,28 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 3. Create the backend traffic policy and the http route to configure the load balancing. For the sticky load balancing, we will use cookies
+#### 3. Create the http route to configure the session persistence logic
   ```
-  cat <<EOF | kubectl apply -f -
-  apiVersion: gateway.envoyproxy.io/v1alpha1
-  kind: BackendTrafficPolicy
-  metadata:
-    name: cookie-policy
-    namespace: default
-  spec:
-    targetRefs:
-      - group: gateway.networking.k8s.io
-        kind: HTTPRoute
-        name: cookie-route
-    loadBalancer:
-      type: ConsistentHash
-      consistentHash:
-        type: Cookie
-        cookie:
-          name: FooBar
-          ttl: 60s
-          attributes:
-            SameSite: Strict
-  ---
-  apiVersion: gateway.networking.k8s.io/v1
+  kubectl apply -f - <<EOF
+  apiVersion: gateway.networking.k8s.io/v1beta1
   kind: HTTPRoute
   metadata:
-    name: cookie-route
-    namespace: default
+    name: header
   spec:
     parentRefs:
-      - name: load-balancing-gateway
-    hostnames:
-      - "www.example.com"
+      - name: sticky-session-gateway
     rules:
       - matches:
           - path:
               type: PathPrefix
-              value: /cookie
+              value: /
         backendRefs:
           - name: backend
             port: 3000
+        sessionPersistence:
+          sessionName: Session-A
+          type: Header
+          absoluteTimeout: 10s
   EOF
   ```
 
@@ -276,80 +259,72 @@ sleep 30
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
-  export GATEWAY_LB_DEMO=$(kubectl get gateway/load-balancing-gateway -o jsonpath='{.status.addresses[0].value}')
+  export GATEWAY_STICKY_DEMO=$(kubectl get gateway/sticky-session-gateway -o jsonpath='{.status.addresses[0].value}')
   ```
 
 #### 6. Test
 
-From the bastion, by sending 10 request with curl to `${GATEWAY_LB_DEMO}/cookie`, you can see that all requests got routed to only one upstream host, since they have same cookie setting.
+From the bastion, send a request to the gateway to get an `header`
 
   ```
-  for i in {1..10}; do curl -I --header "Host: www.example.com" --cookie "FooBar=1.2.3.4" http://${GATEWAY_LB_DEMO}/cookie ; sleep 1; done
+  HEADER=$(curl --verbose http://$GATEWAY_STICKY_DEMO/get 2>&1 | grep "session-a" | awk '{print $3}')
   ```
 
-You can see the result with this command:
-
+Send 5 requests to the gateway using that `header`
   ```
-  kubectl get pods -l app=backend --no-headers -o custom-columns=":metadata.name" | while read -r pod; do echo "$pod: received $(($(kubectl logs $pod | wc -l) - 2)) requests"; done
-  ```
-
-Sample of output:
-  ```
-  backend-765694d47f-6vfl4: received 0 requests
-  backend-765694d47f-7lnl9: received 0 requests
-  backend-765694d47f-8nf2k: received 0 requests
-  backend-765694d47f-8vwcf: received 10 requests
-  backend-765694d47f-9qt42: received 0 requests
-  backend-765694d47f-c785w: received 0 requests
-  backend-765694d47f-cp22v: received 0 requests
-  backend-765694d47f-prktn: received 0 requests
-  backend-765694d47f-whjnm: received 0 requests
-  backend-765694d47f-xgzkj: received 0 requests
+  for i in `seq 5`; do
+      curl -H "Session-A: $HEADER" http://$GATEWAY_STICKY_DEMO/get 2>/dev/null | grep pod
+  done
   ```
 
-You can try to set different cookie to these requests, the upstream host that receives traffics may vary. The following output happens when you use curl to send another 10 requests with cookie `FooBar: 5.6.7.8`.
+As a result, you should see all responses coming from the same pod. Sample:
 
   ```
-  for i in {1..10}; do curl -I --header "Host: www.example.com" --cookie "FooBar=5.6.7.8" http://${GATEWAY_LB_DEMO}/cookie ; sleep 1; done
+  tigera@bastion:~$ for i in `seq 5`; do
+  >     curl -H "Session-A: $HEADER" http://$GATEWAY_STICKY_DEMO/get 2>/dev/null | grep pod
+  > done
+  "pod": "backend-765694d47f-wn8hp"
+  "pod": "backend-765694d47f-wn8hp"
+  "pod": "backend-765694d47f-wn8hp"
+  "pod": "backend-765694d47f-wn8hp"
+  "pod": "backend-765694d47f-wn8hp"
   ```
 
-You can see the result with this command:
+Remove the header and test again:
 
   ```
-  kubectl get pods -l app=backend --no-headers -o custom-columns=":metadata.name" | while read -r pod; do echo "$pod: received $(($(kubectl logs $pod | wc -l) - 2)) requests"; done
+  for i in `seq 5`; do
+      curl http://$GATEWAY_STICKY_DEMO/get 2>/dev/null | grep pod
+  done
   ```
 
 Sample of output:
-  ```
-  backend-765694d47f-6vfl4: received 10 requests
-  backend-765694d47f-7lnl9: received 0 requests
-  backend-765694d47f-8nf2k: received 0 requests
-  backend-765694d47f-8vwcf: received 10 requests
-  backend-765694d47f-9qt42: received 0 requests
-  backend-765694d47f-c785w: received 0 requests
-  backend-765694d47f-cp22v: received 0 requests
-  backend-765694d47f-prktn: received 0 requests
-  backend-765694d47f-whjnm: received 0 requests
-  backend-765694d47f-xgzkj: received 0 requests
-  ```
 
-*NOTE*: It is possible that the same backend pod is used by the gateway. If that's the case, keep trying with a different cookie.
+  ```
+  tigera@bastion:~$ for i in `seq 5`; do
+  >       curl http://$GATEWAY_STICKY_DEMO/get 2>/dev/null | grep pod
+  >   done
+  "pod": "backend-765694d47f-whjc9"
+  "pod": "backend-765694d47f-9s262"
+  "pod": "backend-765694d47f-4fm7c"
+  "pod": "backend-765694d47f-wn8hp"
+  "pod": "backend-765694d47f-4fm7c"
+  ```
 
 ### Clean-up
 
-#### 1. Delete serviceAccount, app, service, HTTPRoute, BackendTrafficPolicy and Gateway
+#### 1. Delete app, service, serviceAccount, HTTPRoute and Gateway
 
   ```
   kubectl delete ServiceAccount backend
   kubectl delete service backend
   kubectl delete deployment backend
-  kubectl delete gateway load-balancing-gateway
-  kubectl delete BackendTrafficPolicy cookie-policy
-  kubectl delete HTTPRoute cookie-route
+  kubectl delete gateway sticky-session-gateway
+  kubectl delete HTTPRoute header
   ```
 
 ===
-> **Congratulations! You have completed `Calico Ingress Gateway Workshop - Consistent Hash Load Balancing`!**
+> **Congratulations! You have completed `Calico Ingress Gateway Workshop - Sticky session with Session Persistence Envoy Route`!**
 
 ---
-**Credits:** Portions of this guide are based on or derived from the [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/tasks/traffic/load-balancing/#consistent-hash).
+**Credits:** Portions of this guide are based on or derived from the [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/tasks/traffic/session-persistence/).
