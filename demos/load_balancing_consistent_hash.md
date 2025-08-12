@@ -47,15 +47,15 @@ In Kubernetes with Envoy Gateway, consistent hashing can be configured so that r
         apiVersion: projectcalico.org/v3
         kind: IPPool
         metadata:
-        name: loadbalancer-ip-pool
+          name: loadbalancer-ip-pool
         spec:
-        cidr: 10.10.10.0/26
-        blockSize: 31
-        natOutgoing: true
-        disabled: false
-        assignmentMode: Automatic
-        allowedUses:
-          - LoadBalancer
+          cidr: 10.10.10.0/26
+          blockSize: 31
+          natOutgoing: true
+          disabled: false
+          assignmentMode: Automatic
+          allowedUses:
+            - LoadBalancer
         EOF
     </details>
 

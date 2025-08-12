@@ -47,15 +47,15 @@ In Kubernetes with Envoy Gateway, round-robin is one of the default load balanci
         apiVersion: projectcalico.org/v3
         kind: IPPool
         metadata:
-        name: loadbalancer-ip-pool
+          name: loadbalancer-ip-pool
         spec:
-        cidr: 10.10.10.0/26
-        blockSize: 31
-        natOutgoing: true
-        disabled: false
-        assignmentMode: Automatic
-        allowedUses:
-          - LoadBalancer
+          cidr: 10.10.10.0/26
+          blockSize: 31
+          natOutgoing: true
+          disabled: false
+          assignmentMode: Automatic
+          allowedUses:
+            - LoadBalancer
         EOF
     </details>
 
@@ -130,7 +130,7 @@ In Kubernetes with Envoy Gateway, round-robin is one of the default load balanci
 5.  <details>
     <summary><code>HEY</code> app is installed on the bastion</summary>
 
-        sudo apt install hey
+        sudo apt install -y hey
     </details>
 
 **About Calico Ingress Gateway**
