@@ -1,0 +1,30 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: backend
+spec:
+  parentRefs:
+    - name: eg
+  hostnames:
+    - "www.example.com"
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: backend-us-east 
+          port: 3000
+          weight: 3
+        - group: ""
+          kind: Service
+          name: backend-us-west 
+          port: 3000
+          weight: 2
+        - group: ""
+          kind: Service
+          name: backend-us-central 
+          port: 3000
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

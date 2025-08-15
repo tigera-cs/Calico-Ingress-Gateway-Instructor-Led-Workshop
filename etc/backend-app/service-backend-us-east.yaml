@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name:  backend-us-east
+  labels:
+    app:  backend-us-east
+    service:  backend-us-east
+spec:
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+  selector:
+    app:  backend-us-east

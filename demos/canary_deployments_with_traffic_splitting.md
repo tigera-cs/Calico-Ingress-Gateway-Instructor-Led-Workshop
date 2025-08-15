@@ -189,6 +189,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   data:
     index.html: |
       <html><body><h1>App Version 1</h1></body></html>
+  EOF
   ```
 
 ***2.2*** - Deploy an Nginx container serving the HTML file
@@ -223,6 +224,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
           - name: html
             configMap:
               name: app-v1-html
+  EOF
   ```
 
 ***2.3*** - Expose the deployment as a Service
@@ -256,10 +258,12 @@ For more details, see the official documentation: [Configure an ingress gateway]
   data:
     index.html: |
       <html><body><h1>App Version 2</h1></body></html>
+  EOF
   ```
 
 ***3.2*** - Deploy an Nginx container serving the HTML file
   ```
+  cat << EOF | kubectl apply -f -
   apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -289,23 +293,25 @@ For more details, see the official documentation: [Configure an ingress gateway]
           - name: html
             configMap:
               name: app-v2-html
+  EOF
   ```
 
 ***3.3*** - Expose the deployment as a Service
   ```
-apiVersion: v1
-kind: Service
-metadata:
-  name: app-v2
-  namespace: my-app
-spec:
-  selector:
-    app: my-app
-    version: v2
-  ports:
-    - port: 80
-      targetPort: 80
-EOF
+  cat << EOF | kubectl apply -f -
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: app-v2
+    namespace: my-app
+  spec:
+    selector:
+      app: my-app
+      version: v2
+    ports:
+      - port: 80
+        targetPort: 80
+  EOF
   ```
 
 #### 4. Define an HTTPRoute to split traffic between app-v1 and app-v2
