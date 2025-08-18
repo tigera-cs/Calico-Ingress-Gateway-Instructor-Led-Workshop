@@ -144,3 +144,96 @@ In real-world scenarios, authentication mechanisms (like Basic Auth) are often e
 
         sudo apt install -y hey
     </details>
+
+6.  <details>
+    <summary><code>k3s</code> is deployed on <code>nonk8s1</code> VM</summary>
+
+      A. From the bastion, ssh into the VM:
+
+        ssh nonk8s1
+
+      B. Disable NetworkManager’s cloud setup services, force all kernels to use the legacy cgroup v1 system, and then reboot the system to apply the changes:
+
+        sudo systemctl disable --now nm-cloud-setup.service nm-cloud-setup.timer
+        sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
+        sudo reboot
+
+      C. Wait 2 minutes for the VM to be up and running, then ssh into it again:
+
+        sleep 120
+        ssh nonk8s1
+
+      D. Load kernel modules needed for Kubernetes networking, set sysctl parameters to enable packet forwarding and bridge traffic filtering, and then apply these settings system-wide:
+
+        sudo modprobe overlay
+        sudo modprobe br_netfilter
+        cat <<EOF | sudo tee /etc/sysctl.d/90-kubelet.conf
+        net.bridge.bridge-nf-call-iptables=1
+        net.ipv4.ip_forward=1
+        net.bridge.bridge-nf-call-ip6tables=1
+        EOF
+        sudo sysctl --system
+
+      E. Install iptables utilities:
+
+        sudo yum install -y iptables iptables-services
+
+      F. Download and run the K3s installer to set up a Kubernetes cluster without Flannel or Traefik, using the specified cluster network range and configuration:
+
+        curl -sfL https://get.k3s.io | \
+          K3S_KUBECONFIG_MODE="644" \
+          INSTALL_K3S_EXEC="--flannel-backend=none --cluster-cidr=192.168.0.0/16 --disable-network-policy --disable=traefik" \
+          sh -
+
+      G. Edit k3s config file and copy it in `.kube/config`:
+
+        sudo sed -i 's|server: https://127\.0\.0\.1:6443|server: https://10.0.1.32:6443|' /etc/rancher/k3s/k3s.yaml
+        cp /etc/rancher/k3s/k3s.yaml .kube/config
+      
+      H. Confirm installation was successful:
+
+        sudo systemctl status k3s
+        kubectl get nodes -o wide
+
+    </details>
+
+7.  <details>
+    <summary><code>Calico Enterprise</code> is installed on the k3s cluster on <code>nonk8s1</code> VM</summary>
+
+      A. Copy repository key and license into the VM:
+
+        scp config.json nonk8s1:config.json
+        scp license.yaml nonk8s1:license.yaml
+
+      B. SSH into the VM and install `Helm`:
+        ssh nonk8s1
+        sudo curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm
+        sudo chmod +x /usr/local/bin/helm
+
+      C. Install Calico Enterprise v3.21 Minimal Install using Helm:
+
+        cat > values.yaml <<EOF
+        installation:
+          cni:
+            type: Calico
+          calicoNetwork:
+            bgp: Enabled
+            ipPools:
+            - cidr: 192.168.0.0/16
+              encapsulation: VXLAN
+        logCollector:
+        enabled: false
+        logStorage:
+        enabled: false
+        manager:
+        enabled: false
+        EOF
+
+        curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-v3.21.2-0.tgz
+
+        helm install calico-enterprise tigera-operator-v3.21.2-0.tgz -f values.yaml \
+        --set-file imagePullSecrets.tigera-pull-secret=config.json,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=config.json \
+        --namespace tigera-operator  \
+        --set-file licenseKeyContent=license.yaml --create-namespace
+
+    </details>

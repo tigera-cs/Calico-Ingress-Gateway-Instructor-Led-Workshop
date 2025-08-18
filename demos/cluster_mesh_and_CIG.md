@@ -443,15 +443,21 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
 
         kubectl config use-context $CLUSTER1_NAME
 
-        kubectl create ns bookinfo
-        kubectl apply -f ~/bookinfo/cluster-1
+        if [ ! -d ~/Calico-Ingress-Gateway-Instructor-Led-Workshop ]; then
+          git clone https://github.com/tigera-cs/Calico-Ingress-Gateway-Instructor-Led-Workshop.git ~/Calico-Ingress-Gateway-Instructor-Led-Workshop
+        fi
+
+        mkdir backend-app
+
+        cp -r ~/Calico-Ingress-Gateway-Instructor-Led-Workshop/etc/backend-app ~/backend-app
+
+        kubectl apply -f ~/backend-app/east
 
         ##Demo federated app on  on $CLUSTER2_NAME
 
         kubectl config use-context $CLUSTER2_NAME
 
-        kubectl create ns bookinfo
-        kubectl apply -f ~/bookinfo/cluster-2
+        kubectl apply -f ~/backend-app/west
 
     </details>
 
