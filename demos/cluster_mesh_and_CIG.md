@@ -1,4 +1,4 @@
-# Calico Ingress Gateway - Canary Deployment with Traffic Splitting
+# Calico Ingress Gateway - Cluster Mesh and multi-cluster routing
 
 ### Table of Contents
 
@@ -229,7 +229,7 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
     </details>
 
 8.  <details>
-    <summary><code>Cluster Mesh</code> is deployed between the k8s cluster and the k3s cluster</summary>
+    <summary><code>Cluster Mesh</code> is deployed between the k8s cluster and the k3s cluster on `nonk8s1` VM</summary>
 
       A. Copy the k3s config file to the bastion and merge it with the existing config file:
 
@@ -239,10 +239,38 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
 
       B. Rename the context of the k8s cluster and copy the following script in the `cluster-mesh.sh` script:
 
-      ADD NOTES ABOUT THIS SCRIPT
-
-
         kubectl config rename-context kubernetes-admin@kubernetes kubernetes-admin
+
+      <details>
+      <summary>Here’s a <code>breakdown</code> of what the script does, step by step:</summary>
+
+      **1. Setup federation service accounts & RBAC in both clusters**
+
+        *1.1.* Applies Tigera Calico federation manifests for service accounts and RBAC.
+        *1.2.* Creates a tigera-federation-remote-cluster service account token secret in kube-system.
+        *1.3.* Extracts service account token, CA cert, and API server URL from the current cluster.
+        *1.4.* Generates a kubeconfig file ($CLUSTER_NAME-kubeconfig.yaml) for each cluster using the extracted credentials.
+
+      **2. Configure Calico Cluster Mesh between clusters**
+
+        *2.1* On Cluster1, creates a namespace cluster-mesh-default.
+        *2.2* Stores Cluster2’s kubeconfig as a Kubernetes secret in that namespace.
+        *2.3* Creates a Role/RoleBinding allowing Calico components to access the secret.
+        *2.4* Creates a RemoteClusterConfiguration CRD pointing to Cluster2.
+        *2.5* On Cluster2, repeats the same steps but in reverse (connecting back to Cluster1).
+
+      **3. Deploy demo federated application**
+      
+        *3.1* Clones the Calico Ingress Gateway Instructor-Led Workshop repo if not already present.
+        *3.2* Backs up any existing ~/backend-app and copies the workshop’s backend app.
+        *3.3* On Cluster1 deploys
+          - Deployment, service and service account of the backend app us-east;
+          - Federated service of the backend app us-west.
+        *3.4* On Cluster2 deploys
+          - Deployment, service and service account of the backend app us-west;
+          - Federated service of the backend app us-east.
+
+      </details>
 
       ---
 
@@ -465,6 +493,9 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
 
     </details>
 
+      
+      *For more information about Cluster Mesh & Federated Services please visit: [Calico Federation](https://docs.tigera.io/calico-enterprise/latest/multicluster/federation/overview)*
+
 **About Calico Ingress Gateway**
 
 * **Calico Ingress Gateway** is an enterprise-grade ingress solution based on the Kubernetes Gateway API, integrated with Envoy Gateway. It enables advanced, application-layer (L7) traffic control and routing to services within a Kubernetes cluster. Calico Ingress Gateway supports features such as weighted or blue-green load balancing and is designed to provide secure, scalable, and flexible ingress management for cloud-native applications.
@@ -505,7 +536,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 2. Define an HTTPRoute to split traffic between backend-app in us-east (local k8s cluster) and backend-app in us-west (remote k3s cluster)
+#### 2. Define an HTTPRoute to split traffic between backend-app in us-east (local k8s cluster) and backend-app in us-west (remote k3s cluster). To "call" the remote deployment, we need to use the `federated` service `federated-backend-us-west` as `backandRef`.
 
 The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1% to the remote cluster `us-west`.
 
@@ -532,7 +563,7 @@ The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1%
             weight: 99
           - group: ""
             kind: Service
-            name: backend-us-west
+            name: federated-backend-us-west
             port: 3000
             weight: 1
   EOF
@@ -573,19 +604,19 @@ From the bastion, continuously send requests to the external IP and print the re
   kubectl config use-context kubernetes-admin
   kubectl delete deploy backend-us-east
   kubectl delete svc backend-us-east
-  kubectl delete deploy backend-us-west
-  kubectl delete svc backend-us-west
+  kubectl delete svc federated-backend-us-west
+  kubectl delete sa backend
   kubectl delete gateway cluster-mesh-gateway
   kubectl delete httproute cluster-mesh
   kubectl config use-context default
   kubectl delete deploy backend-us-west
   kubectl delete svc backend-us-west
-  kubectl delete deploy backend-us-east
-  kubectl delete svc backend-us-east
+  kubectl delete svc federated-backend-us-east
+  kubectl delete sa backend
   ```
 
 ===
-> **Congratulations! You have completed `Calico Ingress Gateway Workshop - Canary Deployment with Traffic Splitting'`!**
+> **Congratulations! You have completed `Calico Ingress Gateway Workshop - Cluster Mesh and multi-cluster routing`!**
 
 ---
 **Credits:** Portions of this guide are based on or derived from the [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/tasks/traffic/http-traffic-splitting/).
