@@ -152,7 +152,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
 ### Demo
 
-#### 1. Create a deployment named `Backend` which we will use to test round robin load balancing. The deployment will have 4 replicas.
+#### 1. Create a deployment named `Backend` which we will use to test sticky session / session persistence. The deployment will have 4 replicas.
 
   ```
   kubectl apply -f - <<EOF
