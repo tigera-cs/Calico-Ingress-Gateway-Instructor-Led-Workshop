@@ -538,10 +538,10 @@ The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1%
   EOF
   ```
 
-#### 6. Wait for 30 seconds to allow services and gateway to be ready
+#### 3. Wait for 30 seconds to allow services and gateway to be ready
 sleep 30
 
-#### 7. Retrieve the external IP of the Envoy Gateway
+#### 4. Retrieve the external IP of the Envoy Gateway
 
   ```
   EXTERNAL_IP=$(kubectl get service -n tigera-gateway -l gateway.envoyproxy.io/owning-gateway-name=cluster-mesh-gateway \
@@ -549,17 +549,21 @@ sleep 30
   echo "Envoy Gateway External IP: $EXTERNAL_IP"
   ```
 
-#### 8. Test
+#### 5. Test
 
-From the bastion, continuously send requests to the external IP and print the response HTML header to verify traffic splitting
+From the bastion, continuously send requests to the external IP and print the response HTML header to verify traffic splitting. You should see that 99% of the time, traffic is sent to `backend-us-east-*`:
 
   ```
-  for i in {1..100}; do
+  for i in {1..500}; do
     curl -s -H “Host: www.example.com” http://$EXTERNAL_IP | jq -r .pod
   done | sort | uniq -c
   ```
 
-You should see the majority of responses coming from `App Version 1`.
+  Sample of output:
+  ```
+  494 backend-us-east-7f76b6f796-9dclj
+    6 backend-us-west-5cb5fb745d-8dqzr
+  ```
 
 ### Clean-up
 
@@ -569,11 +573,15 @@ You should see the majority of responses coming from `App Version 1`.
   kubectl config use-context kubernetes-admin
   kubectl delete deploy backend-us-east
   kubectl delete svc backend-us-east
+  kubectl delete deploy backend-us-west
+  kubectl delete svc backend-us-west
   kubectl delete gateway cluster-mesh-gateway
   kubectl delete httproute cluster-mesh
   kubectl config use-context default
   kubectl delete deploy backend-us-west
   kubectl delete svc backend-us-west
+  kubectl delete deploy backend-us-east
+  kubectl delete svc backend-us-east
   ```
 
 ===
