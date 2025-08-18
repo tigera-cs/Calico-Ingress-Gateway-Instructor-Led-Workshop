@@ -5,8 +5,7 @@
 * [Welcome!](#welcome)
 * [Overview](#overview)
 * [Before you begin...](#before-you-begin)
-* [Demo](#demo)
-* [Clean-up](#clean-up)
+* [Prerequisite & lab setup](#prerequisite--lab-setup)
 
 
 ### Welcome!
@@ -67,7 +66,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   - Calico Enterprise v3.21.X
   - Calico Cloud 21.X
 
-**PREREQUISITE & LAB SETUP**
+### Prerequisite & lab setup
 
 1.  <details>
     <summary>A valid IP pool for loadbalancer services</summary>
