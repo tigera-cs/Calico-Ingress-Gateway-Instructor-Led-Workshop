@@ -453,13 +453,15 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
 
         cp -r ~/Calico-Ingress-Gateway-Instructor-Led-Workshop/etc/backend-app ~/backend-app
 
-        kubectl apply -f ~/backend-app/east
+        kubectl apply -f ~/backend-app/us-east
 
         ##Demo federated app on  on $CLUSTER2_NAME
 
         kubectl config use-context $CLUSTER2_NAME
 
-        kubectl apply -f ~/backend-app/west
+        kubectl apply -f ~/backend-app/us-west
+
+        kubectl config use-context $CLUSTER1_NAME
 
     </details>
 
@@ -493,7 +495,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   apiVersion: gateway.networking.k8s.io/v1
   kind: Gateway
   metadata:
-    name: canary-deployment-gateway
+    name: cluster-mesh-gateway
   spec:
     gatewayClassName: tigera-gateway-class
     listeners:
@@ -503,164 +505,19 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 2. Create a new namespace called "my-app" to isolate resources
-  ```
-  cat << EOF | kubectl create -f -
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: my-app
-  EOF
-  ```
+#### 2. Define an HTTPRoute to split traffic between backend-app in us-east (local k8s cluster) and backend-app in us-west (remote k3s cluster)
 
-#### 2. Deploy version 1 of the app
-***2.1*** - Create a ConfigMap with an HTML file for version 1
-  ```
-  cat << EOF | kubectl apply -f -
-  apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: app-v1-html
-    namespace: my-app
-  data:
-    index.html: |
-      <html><body><h1>App Version 1</h1></body></html>
-  EOF
-  ```
-
-***2.2*** - Deploy an Nginx container serving the HTML file
-  ```
-  cat << EOF | kubectl apply -f -
-  apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: app-v1
-    namespace: my-app
-  spec:
-    replicas: 1
-    selector:
-      matchLabels:
-        app: my-app
-        version: v1
-    template:
-      metadata:
-        labels:
-          app: my-app
-          version: v1
-      spec:
-        containers:
-          - name: nginx
-            image: nginx
-            ports:
-              - containerPort: 80
-            volumeMounts:
-              - name: html
-                mountPath: /usr/share/nginx/html
-        volumes:
-          - name: html
-            configMap:
-              name: app-v1-html
-  EOF
-  ```
-
-***2.3*** - Expose the deployment as a Service
-  ```
-  cat << EOF | kubectl apply -f -
-  apiVersion: v1
-  kind: Service
-  metadata:
-    name: app-v1
-    namespace: my-app
-  spec:
-    selector:
-      app: my-app
-      version: v1
-    ports:
-      - port: 80
-        targetPort: 80
-  EOF
-  ```
-
-#### 3. Deploy version 2 of the app following the same pattern as version 1
-
-***3.1*** - Create a ConfigMap with an HTML file for version 2
-  ```
-  cat << EOF | kubectl apply -f -
-  apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: app-v2-html
-    namespace: my-app
-  data:
-    index.html: |
-      <html><body><h1>App Version 2</h1></body></html>
-  EOF
-  ```
-
-***3.2*** - Deploy an Nginx container serving the HTML file
-  ```
-  apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: app-v2
-    namespace: my-app
-  spec:
-    replicas: 1
-    selector:
-      matchLabels:
-        app: my-app
-        version: v2
-    template:
-      metadata:
-        labels:
-          app: my-app
-          version: v2
-      spec:
-        containers:
-          - name: nginx
-            image: nginx
-            ports:
-              - containerPort: 80
-            volumeMounts:
-              - name: html
-                mountPath: /usr/share/nginx/html
-        volumes:
-          - name: html
-            configMap:
-              name: app-v2-html
-  EOF
-  ```
-
-***3.3*** - Expose the deployment as a Service
-  ```
-  apiVersion: v1
-  kind: Service
-  metadata:
-    name: app-v2
-    namespace: my-app
-  spec:
-    selector:
-      app: my-app
-      version: v2
-    ports:
-      - port: 80
-        targetPort: 80
-  EOF
-  ```
-
-#### 4. Define an HTTPRoute to split traffic between app-v1 and app-v2
-
-The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
+The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1% to the remote cluster `us-west`.
 
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: gateway.networking.k8s.io/v1
   kind: HTTPRoute
   metadata:
-    name: traffic-splitting
+    name: cluster-mesh
   spec:
     parentRefs:
-      - name: canary-deployment-gateway
+      - name: cluster-mesh-gateway
         namespace: default
     rules:
       - matches:
@@ -668,34 +525,16 @@ The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
               type: PathPrefix
               value: /
         backendRefs:
-          - name: app-v1
-            namespace: my-app
-            port: 80
-            weight: 80
-          - name: app-v2
-            namespace: my-app
-            port: 80
-            weight: 20
-  EOF
-  ```
-
-#### 5. Create a ReferenceGrant to allow HTTPRoute in the `default` namespace to reference services in `my-app` namespace
-
-  ```
-  kubectl apply -f - <<EOF
-  apiVersion: gateway.networking.k8s.io/v1beta1
-  kind: ReferenceGrant
-  metadata:
-    name: my-app
-    namespace: my-app
-  spec:
-    from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: default
-    to:
-    - group: ""
-      kind: Service
+          - group: ""
+            kind: Service
+            name: backend-us-east
+            port: 3000
+            weight: 99
+          - group: ""
+            kind: Service
+            name: backend-us-west
+            port: 3000
+            weight: 1
   EOF
   ```
 
@@ -705,7 +544,7 @@ sleep 30
 #### 7. Retrieve the external IP of the Envoy Gateway
 
   ```
-  EXTERNAL_IP=$(kubectl get service -n tigera-gateway -l gateway.envoyproxy.io/owning-gateway-name=canary-deployment-gateway \
+  EXTERNAL_IP=$(kubectl get service -n tigera-gateway -l gateway.envoyproxy.io/owning-gateway-name=cluster-mesh-gateway \
     -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
   echo "Envoy Gateway External IP: $EXTERNAL_IP"
   ```
@@ -715,7 +554,9 @@ sleep 30
 From the bastion, continuously send requests to the external IP and print the response HTML header to verify traffic splitting
 
   ```
-  while true; do curl -s http://$EXTERNAL_IP/ | grep "<h1>"; sleep 1; done
+  for i in {1..100}; do
+    curl -s -H “Host: www.example.com” http://$EXTERNAL_IP | jq -r .pod
+  done | sort | uniq -c
   ```
 
 You should see the majority of responses coming from `App Version 1`.
@@ -725,9 +566,14 @@ You should see the majority of responses coming from `App Version 1`.
 #### 1. Delete apps, services, HTTPRoute and Gateway
 
   ```
-  kubectl delete gateway canary-deployment-gateway
-  kubectl delete httproute traffic-splitting
-  kubectl delete namespace my-app
+  kubectl config use-context kubernetes-admin
+  kubectl delete deploy backend-us-east
+  kubectl delete svc backend-us-east
+  kubectl delete gateway cluster-mesh-gateway
+  kubectl delete httproute cluster-mesh
+  kubectl config use-context default
+  kubectl delete deploy backend-us-west
+  kubectl delete svc backend-us-west
   ```
 
 ===
