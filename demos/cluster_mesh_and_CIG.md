@@ -447,7 +447,9 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
           git clone https://github.com/tigera-cs/Calico-Ingress-Gateway-Instructor-Led-Workshop.git ~/Calico-Ingress-Gateway-Instructor-Led-Workshop
         fi
 
-        mkdir backend-app
+        if [ -d ~/backend-app ]; then
+          mv ~/backend-app ~/backend-app.bak.$(date +%Y%m%d%H%M%S)
+        fi
 
         cp -r ~/Calico-Ingress-Gateway-Instructor-Led-Workshop/etc/backend-app ~/backend-app
 
