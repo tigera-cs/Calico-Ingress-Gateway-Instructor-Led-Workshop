@@ -22,7 +22,6 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 ---
 
 ### Overview
-
 **About Calico Ingress Gateway**
 
 * **Calico Ingress Gateway** is an enterprise-grade ingress solution based on the Kubernetes Gateway API, integrated with Envoy Gateway. It enables advanced, application-layer (L7) traffic control and routing to services within a Kubernetes cluster. Calico Ingress Gateway supports features such as weighted or blue-green load balancing and is designed to provide secure, scalable, and flexible ingress management for cloud-native applications.
@@ -47,7 +46,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 **This workshop includes the following demos:**
 - A/B deployments with http routing
 - Canary deployments with traffic splitting
-- High Availability & Failoer
+- High Availability & Failover
 - Load balancing with consistent hash
 - Load balancing with round robin
 - Migration from IngressAPI (NGINX) to GatewayAPI(Calico Ingress Gateway)
@@ -317,6 +316,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
         scp license.yaml nonk8s1:license.yaml
 
       B. SSH into the VM and install `Helm`:
+
         ssh nonk8s1
         sudo curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm
         sudo chmod +x /usr/local/bin/helm
