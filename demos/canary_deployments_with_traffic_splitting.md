@@ -177,8 +177,8 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 2. Deploy version 1 of the app
-***2.1*** - Create a ConfigMap with an HTML file for version 1
+#### 3. Deploy version 1 of the app
+***3.1*** - Create a ConfigMap with an HTML file for version 1
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -192,7 +192,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-***2.2*** - Deploy an Nginx container serving the HTML file
+***3.2*** - Deploy an Nginx container serving the HTML file
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: apps/v1
@@ -227,7 +227,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-***2.3*** - Expose the deployment as a Service
+***3.3*** - Expose the deployment as a Service
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -245,9 +245,9 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 3. Deploy version 2 of the app following the same pattern as version 1
+#### 4. Deploy version 2 of the app following the same pattern as version 1
 
-***3.1*** - Create a ConfigMap with an HTML file for version 2
+***4.1*** - Create a ConfigMap with an HTML file for version 2
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -261,7 +261,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-***3.2*** - Deploy an Nginx container serving the HTML file
+***4.2*** - Deploy an Nginx container serving the HTML file
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: apps/v1
@@ -296,7 +296,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-***3.3*** - Expose the deployment as a Service
+***4.3*** - Expose the deployment as a Service
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -314,7 +314,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 4. Define an HTTPRoute to split traffic between app-v1 and app-v2
+#### 5. Define an HTTPRoute to split traffic between app-v1 and app-v2
 
 The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
 
@@ -345,7 +345,7 @@ The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
   EOF
   ```
 
-#### 5. Create a ReferenceGrant to allow HTTPRoute in the `default` namespace to reference services in `my-app` namespace
+#### 6. Create a ReferenceGrant to allow HTTPRoute in the `default` namespace to reference services in `my-app` namespace
 
   ```
   kubectl apply -f - <<EOF
@@ -365,10 +365,10 @@ The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
   EOF
   ```
 
-#### 6. Wait for 30 seconds to allow services and gateway to be ready
+#### 7. Wait for 30 seconds to allow services and gateway to be ready
 sleep 30
 
-#### 7. Retrieve the external IP of the Envoy Gateway
+#### 8. Retrieve the external IP of the Envoy Gateway
 
   ```
   EXTERNAL_IP=$(kubectl get service -n tigera-gateway -l gateway.envoyproxy.io/owning-gateway-name=canary-deployment-gateway \
@@ -376,7 +376,7 @@ sleep 30
   echo "Envoy Gateway External IP: $EXTERNAL_IP"
   ```
 
-#### 8. Test
+#### 9. Test
 
 From the bastion, continuously send requests to the external IP and print the response HTML header to verify traffic splitting
 

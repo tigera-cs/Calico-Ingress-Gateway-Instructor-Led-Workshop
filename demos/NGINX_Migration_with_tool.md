@@ -1,0 +1,731 @@
+# Calico Ingress Gateway - Migration from NGINX Ingress with ingress2gateway
+
+### Table of Contents
+
+* [Welcome!](#welcome)
+* [Overview](#overview)
+* [Before you begin...](#before-you-begin)
+* [Demo](#demo)
+* [Clean-up](#clean-up)
+
+
+### Welcome!
+
+Welcome to the **Calico Ingress Gateway Instructor Led Workshop**. 
+
+The Calico Ingress Gateway Workshop aims to explain the kubernetes' and IngressAPI native limitations, the differences between IngressAPI and GatewayAPI and the most common use cases where Calico Ingress Gateway can solve.
+
+We hope you enjoyed the presentation! Feel free to download the slides:
+- [Calico Ingress Gateway - Introduction](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Introduction.pdf)
+- [Calico Ingress Gateway - Capabilities](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Capabilities.pdf)
+- [Calico Ingress Gateway - Migration](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Migration.pdf)
+
+---
+
+### Overview
+
+Organizations migrate from the older Ingress API to the newer Gateway API because Gateway API offers more flexibility, better extensibility, and clearer separation of concerns for managing traffic routing in Kubernetes. 
+
+In real-world scenarios, authentication mechanisms (like Basic Auth) are often enforced at the ingress layer to secure applications. To simulate this during migration, Basic Auth can be implemented in Envoy Gateway using Envoy’s `SecurityPolicy` or authentication filters, ensuring that security controls are preserved while adopting the more powerful Gateway API.
+
+---
+
+### Before you begin...
+
+**IMPORTANT**
+
+* Supported CE/CC versions:
+  - Calico Enterprise v3.21.X
+  - Calico Cloud 21.X
+
+**PREREQUISITE**
+
+1.  <details>
+    <summary>A valid IP pool for loadbalancer services</summary>
+
+        kubectl apply -f - <<EOF
+        apiVersion: projectcalico.org/v3
+        kind: IPPool
+        metadata:
+          name: loadbalancer-ip-pool
+        spec:
+          cidr: 10.10.10.0/26
+          blockSize: 31
+          natOutgoing: true
+          disabled: false
+          assignmentMode: Automatic
+          allowedUses:
+            - LoadBalancer
+        EOF
+    </details>
+
+2.  <details>
+    <summary>Calico BGP Configuration and BGP Peer to advertise serviceLoadBalancerIPs to the bastion or firewall, and peer it with your cluster nodes </summary>
+    
+        kubectl apply -f - <<EOF
+        apiVersion: projectcalico.org/v3
+        kind: BGPConfiguration
+        metadata:
+          name: default
+        spec:
+          logSeverityScreen: Info
+          nodeToNodeMeshEnabled: true
+          nodeMeshMaxRestartTime: 120s
+          asNumber: 64512
+          serviceLoadBalancerIPs:
+          - cidr: 10.10.10.0/26
+          listenPort: 179
+          bindMode: NodeIP
+        ---
+        apiVersion: projectcalico.org/v3
+        kind: BGPPeer
+        metadata:
+          name: my-global-peer
+        spec:
+          peerIP: 10.0.1.10
+          asNumber: 64512
+        EOF
+    </details>
+
+3.  <details>
+    <summary>The bastion/firewall is peered with cluster nodes and is accepting advetised loadbalancer service IPs (Ingress Gateways) </summary>
+
+        watch sudo birdc show protocols
+      
+      Sample of output:
+
+        BIRD 1.6.8 ready.
+        name     proto    table    state  since       info
+        direct1  Direct   master   up     23:42:33    
+        kernel1  Kernel   master   up     23:42:33    
+        device1  Device   master   up     23:42:33    
+        control1 BGP      master   up     23:42:35    Established   
+        worker1  BGP      master   up     23:42:36    Established   
+        worker2  BGP      master   up     23:42:35    Established
+
+      Check that the route `if (net ~ 10.10.10.0/26) then accept;` has been added correctly:
+
+        sudo grep -A 8 "Import filter"  /etc/bird/bird.conf
+
+      If the route is not there, add it with this command:
+
+        sudo sed -i 's/if (net ~ 10.50.0.0\/24) then accept;/if (net ~ 10.50.0.0\/24) then accept;\n                        if (net ~ 10.10.10.0\/26) then accept;/g' /etc/bird/bird.conf
+
+      And restart bird
+
+        sudo systemctl restart bird
+    </details>
+
+4.  <details>
+    <summary>Gateway API support is enabled</summary>
+
+        kubectl apply -f - <<EOF
+        apiVersion: operator.tigera.io/v1
+        kind: GatewayAPI
+        metadata:
+          name: tigera-secure
+        EOF
+    </details>
+
+5.  <details>
+    <summary><code>htpasswd</code> app is installed on the bastion</summary>
+
+        sudo apt install -y apache2-utils
+    </details>
+
+6.  <details>
+    <summary><code>go, git, make</code> apps are installed on the bastion</summary>
+
+        curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+        rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        go version
+        echo "---"
+        apt-get install -y git make
+        go install github.com/kubernetes-sigs/ingress2gateway@v0.4.0
+    </details>
+
+7.  <details>
+    <summary><code>ingress2gateway</code> is are installed on the bastion</summary>
+
+        git clone https://github.com/kubernetes-sigs/ingress2gateway.git && cd ingress2gateway
+        make build
+        ./ingress2gateway version
+    </details>
+
+**About Calico Ingress Gateway**
+
+* **Calico Ingress Gateway** is an enterprise-grade ingress solution based on the Kubernetes Gateway API, integrated with Envoy Gateway. It enables advanced, application-layer (L7) traffic control and routing to services within a Kubernetes cluster. Calico Ingress Gateway supports features such as weighted or blue-green load balancing and is designed to provide secure, scalable, and flexible ingress management for cloud-native applications.
+
+* **Gateway API** is an official Kubernetes API for advanced routing to services in a cluster. To read about its use cases, structure and design, please see the official docs. Calico Enterprise provides the following resources and versions of the Gateway API.
+
+  | Resource         | Versions           |
+  |------------------|--------------------|
+  | BackendLBPolicy  | v1alpha2           |
+  | BackendTLSPolicy | v1alpha3           |
+  | GatewayClass     | v1, v1beta1        |
+  | Gateway          | v1, v1beta1        |
+  | GRPCRoute        | v1, v1alpha2       |
+  | HTTPRoute        | v1, v1beta1        |
+  | ReferenceGrant   | v1beta1, v1alpha2  |
+  | TCPRoute         | v1alpha2           |
+  | TLSRoute         | v1alpha2           |
+  | UDPRoute         | v1alpha2           |
+
+For more details, see the official documentation: [Configure an ingress gateway](https://docs.tigera.io/calico-enterprise/latest/networking/gateway-api).
+
+### Demo
+
+This demo showcases how to deploy a simple app deployment on Kubernetes with basic HTTP authentication and canary deployment (version1 & version2) configured through both an NGINX Ingress and a Gateway API setup.
+
+Key steps demonstrated:
+Deploy an application version1 & version2 and expose them internally with ClusterIP Services.
+
+Create a basic-auth secret using htpasswd for user authentication.
+
+Configure an NGINX Ingress with:
+- Annotations to enable basic auth, protecting access to the application
+- Annotations to enable canary deployment.
+
+Use curl commands to show how requests are:
+- Rejected without credentials
+- Accepted with the correct username/password
+- Split between version1 and version2
+
+Deploy a Gateway and HTTPRoute using the Gateway API (instead of Ingress) with a corresponding security policy for basic auth and traffic splitting.
+
+Show how to access the application through the Gateway API with authentication, illustrating a migration path from Ingress to Gateway API while maintaining security and canary deployment.
+
+It’s a full example of securing an application with basic authentication and canary deployment, via two Kubernetes traffic routing methods.
+
+#### 1. Deploy version 1 of the app
+***1.1*** - Create a ConfigMap with an HTML file for version 1
+  ```
+  cat << EOF | kubectl apply -f -
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: app-v1-html
+  data:
+    index.html: |
+      <html><body><h1>App Version 1</h1></body></html>
+  EOF
+  ```
+
+***1.2*** - Deploy an Nginx container serving the HTML file
+  ```
+  cat << EOF | kubectl apply -f -
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: app-v1
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: my-app
+        version: v1
+    template:
+      metadata:
+        labels:
+          app: my-app
+          version: v1
+      spec:
+        containers:
+          - name: nginx
+            image: nginx
+            ports:
+              - containerPort: 80
+            volumeMounts:
+              - name: html
+                mountPath: /usr/share/nginx/html
+        volumes:
+          - name: html
+            configMap:
+              name: app-v1-html
+  EOF
+  ```
+
+***1.3*** - Expose the deployment as a Service
+  ```
+  cat << EOF | kubectl apply -f -
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: app-v1
+  spec:
+    selector:
+      app: my-app
+      version: v1
+    ports:
+      - port: 80
+        targetPort: 80
+  EOF
+  ```
+
+#### 2. Deploy version 2 of the app following the same pattern as version 1
+
+***2.1*** - Create a ConfigMap with an HTML file for version 2
+  ```
+  cat << EOF | kubectl apply -f -
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: app-v2-html
+  data:
+    index.html: |
+      <html><body><h1>App Version 2</h1></body></html>
+  EOF
+  ```
+
+***2.2*** - Deploy an Nginx container serving the HTML file
+  ```
+  cat << EOF | kubectl apply -f -
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: app-v2
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: my-app
+        version: v2
+    template:
+      metadata:
+        labels:
+          app: my-app
+          version: v2
+      spec:
+        containers:
+          - name: nginx
+            image: nginx
+            ports:
+              - containerPort: 80
+            volumeMounts:
+              - name: html
+                mountPath: /usr/share/nginx/html
+        volumes:
+          - name: html
+            configMap:
+              name: app-v2-html
+  EOF
+  ```
+
+***2.3*** - Expose the deployment as a Service
+  ```
+  cat << EOF | kubectl apply -f -
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: app-v2
+  spec:
+    selector:
+      app: my-app
+      version: v2
+    ports:
+      - port: 80
+        targetPort: 80
+  EOF
+  ```
+
+#### 3. Create an user/password pair which we will use for the authentication for both IngressAPI and GatewayAPI, via a kubernetes `secret`
+
+  ```
+  htpasswd -bcs auth foo bar
+  cp auth .htpasswd
+  kubectl create secret generic basic-auth --from-file=auth --from-file=.htpasswd
+  ```
+
+#### 4. Create an `Ingress` for the `app-v1` service, which requires authentication
+
+  ```
+  HOSTNAME="echoserver.myingress.com"
+
+  cat << EOF | kubectl apply -f -
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ingress-with-auth
+    annotations:
+      nginx.ingress.kubernetes.io/auth-type: basic
+      nginx.ingress.kubernetes.io/auth-secret: basic-auth
+      nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - demo'
+      kubernetes.io/ingress.class: "nginx"
+  spec:
+    rules:
+    - host: "$HOSTNAME"
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: app-v1
+              port:
+                number: 80
+  EOF
+  ```
+
+#### 5. Create an `Ingress` for the `app-v2` service, which requires authentication. This ingress will have the `canary` annotations
+
+  ```
+  HOSTNAME="echoserver.myingress.com"
+
+  cat << EOF | kubectl apply -f -
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: ingress-with-auth-canary
+    annotations:
+      nginx.ingress.kubernetes.io/auth-type: basic
+      nginx.ingress.kubernetes.io/auth-secret: basic-auth
+      nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - demo'
+      kubernetes.io/ingress.class: "nginx"
+      nginx.ingress.kubernetes.io/canary: "true"
+      nginx.ingress.kubernetes.io/canary-weight: "20"
+  spec:
+    rules:
+    - host: "$HOSTNAME"
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: app-v2
+              port:
+                number: 80
+  EOF
+  ```
+
+#### 5. TEST Ingress
+
+***5.1*** - Save the hostname of the Kubernetes control plane of this lab, which is tied to the NGINX Controller:
+
+  ```
+  INGRESS_URL="$(kubectl cluster-info | grep control | awk -F ":" '{print $2}' | sed "s/\/\///g")"
+  ```
+
+***5.2*** - Test the connection without the user:
+
+  ```
+  while true; do curl -s -kv -H "Host: $HOSTNAME" http://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
+  ```
+
+  You should get an `401 - Authentication Required` error:
+
+  ```
+    * Connection #0 to host 172.212.46.95 left intact
+    <center><h1>401 Authorization Required</h1></center>
+    *   Trying 172.212.46.95:80...
+    * Connected to 172.212.46.95 (172.212.46.95) port 80
+    > GET / HTTP/1.1
+    > Host: echoserver.myingress.com
+    > User-Agent: curl/8.7.1
+    > Accept: */*
+    >
+    * Request completely sent off
+    < HTTP/1.1 401 Unauthorized
+    < Date: Tue, 19 Aug 2025 10:48:03 GMT
+    < Content-Type: text/html
+    < Content-Length: 172
+    < Connection: keep-alive
+    < WWW-Authenticate: Basic realm="Authentication Required - demo"
+  ```
+
+***5.3*** - Test the connection with the user:
+
+  ```
+  while true; do curl -s -kv -H "Host: $HOSTNAME" -u foo:bar http://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
+
+  ```
+
+  You should get a `200 OK`:
+
+  ```
+    *   Trying 172.212.46.95:80...
+    * Connected to 172.212.46.95 (172.212.46.95) port 80
+    * Server auth using Basic with user 'foo'
+    > GET / HTTP/1.1
+    > Host: echoserver.myingress.com
+    > Authorization: Basic Zm9vOmJhcg==
+    > User-Agent: curl/8.7.1
+    > Accept: */*
+    >
+    * Request completely sent off
+    < HTTP/1.1 200 OK
+    < Date: Tue, 19 Aug 2025 10:47:49 GMT
+    < Content-Type: text/html
+    < Content-Length: 49
+    < Connection: keep-alive
+    < Last-Modified: Tue, 19 Aug 2025 10:37:13 GMT
+    < ETag: "68a453d9-31"
+    < Accept-Ranges: bytes
+    <
+    { [49 bytes data]
+    * Connection #0 to host 172.212.46.95 left intact
+    <html><body><h1>App Version 1</h1></body></html>
+  ```
+
+  You should also see the canary deployment in action:
+
+  Command:
+  ```
+  while true; do curl -s -k -H "Host: $HOSTNAME" -u foo:bar http://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
+  ```
+
+  Output:
+  ```
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 2</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 2</h1></body></html>
+  ```
+
+#### 6. Use the `ingress2gateway` tool to automatically create the gateway and the `HTTPRoute`
+
+***6.1*** - Get the translated resourses in the `gateway-resources.yaml` file
+
+  ```
+  ./ingress2gateway print --providers=ingress-nginx > gateway-resources.yaml
+  ```
+
+  The `gateway-resources.yaml` should look like this:
+
+  ```
+  Notifications from INGRESS-NGINX:
+  +--------------+--------------------------------------------------------------------------------------------+---------------------------------------------------------------+
+  | MESSAGE TYPE |                                        NOTIFICATION                                        |                        CALLING OBJECT                         |
+  +--------------+--------------------------------------------------------------------------------------------+---------------------------------------------------------------+
+  | INFO         | parsed canary annotations of ingress and patched httproute.spec.rules[].backendRefs fields | HTTPRoute: default/ingress-with-auth-echoserver-myingress-com |
+  +--------------+--------------------------------------------------------------------------------------------+---------------------------------------------------------------+
+
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    creationTimestamp: null
+    name: nginx
+    namespace: default
+  spec:
+    gatewayClassName: nginx
+    listeners:
+    - hostname: echoserver.myingress.com
+      name: echoserver-myingress-com-http
+      port: 80
+      protocol: HTTP
+  status: {}
+  ---
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    creationTimestamp: null
+    name: ingress-with-auth-echoserver-myingress-com
+    namespace: default
+  spec:
+    hostnames:
+    - echoserver.myingress.com
+    parentRefs:
+    - name: nginx
+    rules:
+    - backendRefs:
+      - name: app-v1
+        port: 80
+        weight: 80
+      - name: app-v2
+        port: 80
+        weight: 20
+      matches:
+      - path:
+          type: PathPrefix
+          value: /
+  status:
+    parents: []
+  ```
+
+***6.2*** - Edit the file to:
+    - Remove the initial lines (description of the `ingress2gateway` activity)
+    - Replace the `gatewayClassName` from `nginx` to `tigera-gateway-class`
+
+***6.3*** - Note that the Authentication annotation has not been translated in a GatewayAPI resource because the tool is not able to do it. Manually add a `SecurityPolicy` resource which will enforce the authentication. For more information about `basic auth` with `SecurityPolicy` please visit [this](https://gateway.envoyproxy.io/docs/tasks/security/basic-auth/) page.
+
+The final file should look like this:
+
+  ```
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    creationTimestamp: null
+    name: nginx
+    namespace: default
+  spec:
+    gatewayClassName: tigera-gateway-class
+    listeners:
+    - hostname: echoserver.myingress.com
+      name: echoserver-myingress-com-http
+      port: 80
+      protocol: HTTP
+  status: {}
+  ---
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    creationTimestamp: null
+    name: ingress-with-auth-echoserver-myingress-com
+    namespace: default
+  spec:
+    hostnames:
+    - echoserver.myingress.com
+    parentRefs:
+    - name: nginx
+    rules:
+    - backendRefs:
+      - name: app-v1
+        port: 80
+        weight: 80
+      - name: app-v2
+        port: 80
+        weight: 20
+      matches:
+      - path:
+          type: PathPrefix
+          value: /
+  status:
+    parents: []
+  ---
+  apiVersion: gateway.envoyproxy.io/v1alpha1
+  kind: SecurityPolicy
+  metadata:
+    name: basic-auth-example
+  spec:
+    targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: ingress-with-auth-echoserver-myingress-com
+    basicAuth:
+      users:
+        name: "basic-auth"
+  ```
+
+***6.4*** - Apply the edit `gateway-resources.yaml` file:
+
+  ```
+  kubectl apply -f gateway-resources.yaml
+  ```
+
+#### 7. Wait for 30 seconds to allow services and gateway to be ready
+sleep 30
+
+#### 8. Retrieve the external IP of the Gateway
+
+  ```
+  export MIGRATION_GATEWAY=$(kubectl get gateway/nginx -o jsonpath='{.status.addresses[0].value}')
+  ```
+
+#### 9. TEST Gateway
+
+***9.1*** - Test the connection to the gateway without the user:
+
+  ```
+  while true; do curl -vs -H "Host: $HOSTNAME" http://$MIGRATION_GATEWAY/ | grep "<h1>"; sleep 1; done
+  ```
+
+  You should get an `401 - Unauthorized` error:
+
+  ```
+  Connected to 48.217.130.0 (48.217.130.0) port 80
+  > GET / HTTP/1.1
+  > Host: echoserver.myingress.com
+  > User-Agent: curl/8.7.1
+  > Accept: */*
+  >
+  * Request completely sent off
+  < HTTP/1.1 401 Unauthorized
+  < www-authenticate: Basic realm="http://echoserver.myingress.com/"
+  < content-length: 58
+  < content-type: text/plain
+  < date: Tue, 19 Aug 2025 12:00:16 GMT
+  <
+  { [58 bytes data]
+  * Connection #0 to host 48.217.130.0 left intact
+  ```
+
+***9.2*** - Test the connection with the user:
+
+  ```
+  while true; do curl -vs -H "Host: $HOSTNAME" -u foo:bar http://$MIGRATION_GATEWAY/ | grep "<h1>"; sleep 1; done
+  ```
+
+  You should get a `200 OK`:
+
+  ```
+  *   Trying 48.217.130.0:80...
+  * Connected to 48.217.130.0 (48.217.130.0) port 80
+  * Server auth using Basic with user 'foo'
+  > GET / HTTP/1.1
+  > Host: echoserver.myingress.com
+  > Authorization: Basic Zm9vOmJhcg==
+  > User-Agent: curl/8.7.1
+  > Accept: */*
+  >
+  * Request completely sent off
+  < HTTP/1.1 200 OK
+  < server: nginx/1.29.1
+  < date: Tue, 19 Aug 2025 12:01:21 GMT
+  < content-type: text/html
+  < content-length: 49
+  < last-modified: Tue, 19 Aug 2025 10:37:13 GMT
+  < etag: "68a453d9-31"
+  < accept-ranges: bytes
+  <
+  { [49 bytes data]
+  * Connection #0 to host 48.217.130.0 left intact
+  <html><body><h1>App Version 1</h1></body></html>
+  ```
+
+  You should also see the canary deployment in action:
+
+  Command:
+  ```
+  while true; do curl -s -H "Host: $HOSTNAME" -u foo:bar http://$MIGRATION_GATEWAY/ | grep "<h1>"; sleep 1; done
+  ```
+
+  Output:
+  ```
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 2</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 1</h1></body></html>
+    <html><body><h1>App Version 2</h1></body></html>
+  ```
+
+### Clean-up
+
+#### 1. Delete the app, service, HTTPRoute, Ingress, Secret, SecurityPolicy and Gateway
+
+  ```
+  kubectl delete service app-v1 app-v2
+  kubectl delete deployment app-v1 app-v2
+  kubectl delete secret basic-auth
+  kubectl delete ingress ingress-with-auth ingress-with-auth-canary
+  kubectl delete gateway nginx
+  kubectl delete HTTPRoute ingress-with-auth-echoserver-myingress-com
+  kubectl delete SecurityPolicy basic-auth-example
+  ```
+
+===
+> **Congratulations! You have completed `Calico Ingress Gateway Workshop - Migration from NGINX Ingress with ingress2gateway`!**
+
+---
+**Credits:** Portions of this guide are based on or derived from the [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/install/migrating-to-envoy/).
