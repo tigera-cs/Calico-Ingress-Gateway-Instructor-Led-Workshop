@@ -192,7 +192,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
         ./ingress2gateway version
     </details>
 
-10.  <details>
+10. <details>
     <summary><code>k3s</code> is deployed on <code>nonk8s1</code> VM</summary>
 
       A. From the bastion, ssh into the VM:
@@ -244,7 +244,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
     </details>
 
-11.  <details>
+11. <details>
     <summary><code>Calico Enterprise</code> is installed on the k8s cluster</summary>
 
       A. Make sure that license.yaml and config.json are updated!
