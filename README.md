@@ -69,182 +69,6 @@ For more details, see the official documentation: [Configure an ingress gateway]
 ### Prerequisite & lab setup
 
 1.  <details>
-    <summary>A valid IP pool for loadbalancer services</summary>
-
-        kubectl apply -f - <<EOF
-        apiVersion: projectcalico.org/v3
-        kind: IPPool
-        metadata:
-          name: loadbalancer-ip-pool
-        spec:
-          cidr: 10.10.10.0/26
-          blockSize: 31
-          natOutgoing: true
-          disabled: false
-          assignmentMode: Automatic
-          allowedUses:
-            - LoadBalancer
-        EOF
-    </details>
-
-2.  <details>
-    <summary>Calico BGP Configuration and BGP Peer to advertise serviceLoadBalancerIPs to the bastion or firewall, and peer it with your cluster nodes </summary>
-    
-        kubectl apply -f - <<EOF
-        apiVersion: projectcalico.org/v3
-        kind: BGPConfiguration
-        metadata:
-          name: default
-        spec:
-          logSeverityScreen: Info
-          nodeToNodeMeshEnabled: true
-          nodeMeshMaxRestartTime: 120s
-          asNumber: 64512
-          serviceLoadBalancerIPs:
-          - cidr: 10.10.10.0/26
-          listenPort: 179
-          bindMode: NodeIP
-        ---
-        apiVersion: projectcalico.org/v3
-        kind: BGPPeer
-        metadata:
-          name: my-global-peer
-        spec:
-          peerIP: 10.0.1.10
-          asNumber: 64512
-        EOF
-    </details>
-
-3.  <details>
-    <summary>The bastion/firewall is peered with cluster nodes and is accepting advetised loadbalancer service IPs (Ingress Gateways) </summary>
-
-        watch sudo birdc show protocols
-      
-      Sample of output:
-
-        BIRD 1.6.8 ready.
-        name     proto    table    state  since       info
-        direct1  Direct   master   up     23:42:33    
-        kernel1  Kernel   master   up     23:42:33    
-        device1  Device   master   up     23:42:33    
-        control1 BGP      master   up     23:42:35    Established   
-        worker1  BGP      master   up     23:42:36    Established   
-        worker2  BGP      master   up     23:42:35    Established
-
-      Check that the route `if (net ~ 10.10.10.0/26) then accept;` has been added correctly:
-
-        sudo grep -A 8 "Import filter"  /etc/bird/bird.conf
-
-      If the route is not there, add it with this command:
-
-        sudo sed -i 's/if (net ~ 10.50.0.0\/24) then accept;/if (net ~ 10.50.0.0\/24) then accept;\n                        if (net ~ 10.10.10.0\/26) then accept;/g' /etc/bird/bird.conf
-
-      And restart bird
-
-        sudo systemctl restart bird
-    </details>
-
-4.  <details>
-    <summary>Gateway API support is enabled</summary>
-
-        kubectl apply -f - <<EOF
-        apiVersion: operator.tigera.io/v1
-        kind: GatewayAPI
-        metadata:
-          name: tigera-secure
-        EOF
-    </details>
-
-5.  <details>
-    <summary><code>htpasswd</code> app is installed on the bastion</summary>
-
-        sudo apt install -y apache2-utils
-    </details>
-
-6.  <details>
-    <summary><code>JQ</code> app is installed on the bastion</summary>
-
-        sudo apt install -y jq
-    </details>
-
-7.  <details>
-    <summary><code>HEY</code> app is installed on the bastion</summary>
-
-        sudo apt install -y hey
-    </details>
-
-8.  <details>
-    <summary><code>go</code> tool is installed on the bastion</summary>
-
-        curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
-        rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
-        export PATH=$PATH:/usr/local/go/bin
-        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-        source ~/.bashrc
-        go version
-    </details>
-
-9.  <details>
-    <summary><code>ingress2gateway</code> is are installed on the bastion</summary>
-
-        git clone https://github.com/kubernetes-sigs/ingress2gateway.git && cd ingress2gateway
-        make build
-        ./ingress2gateway version
-    </details>
-
-10. <details>
-    <summary><code>k3s</code> is deployed on <code>nonk8s1</code> VM</summary>
-
-      A. From the bastion, ssh into the VM:
-
-        ssh nonk8s1
-
-      B. Disable NetworkManager’s cloud setup services, force all kernels to use the legacy cgroup v1 system, and then reboot the system to apply the changes:
-
-        sudo systemctl disable --now nm-cloud-setup.service nm-cloud-setup.timer
-        sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
-        sudo reboot
-
-      C. Wait 2 minutes for the VM to be up and running, then ssh into it again:
-
-        sleep 120
-        ssh nonk8s1
-
-      D. Load kernel modules needed for Kubernetes networking, set sysctl parameters to enable packet forwarding and bridge traffic filtering, and then apply these settings system-wide:
-
-        sudo modprobe overlay
-        sudo modprobe br_netfilter
-        cat <<EOF | sudo tee /etc/sysctl.d/90-kubelet.conf
-        net.bridge.bridge-nf-call-iptables=1
-        net.ipv4.ip_forward=1
-        net.bridge.bridge-nf-call-ip6tables=1
-        EOF
-        sudo sysctl --system
-
-      E. Install iptables utilities:
-
-        sudo yum install -y iptables iptables-services
-
-      F. Download and run the K3s installer to set up a Kubernetes cluster without Flannel or Traefik, using the specified cluster network range and configuration:
-
-        curl -sfL https://get.k3s.io | \
-          K3S_KUBECONFIG_MODE="644" \
-          INSTALL_K3S_EXEC="--flannel-backend=none --cluster-cidr=192.168.0.0/16 --disable-network-policy --disable=traefik" \
-          sh -
-
-      G. Edit k3s config file and copy it in `.kube/config`:
-
-        sudo sed -i 's|server: https://127\.0\.0\.1:6443|server: https://10.0.1.32:6443|' /etc/rancher/k3s/k3s.yaml
-        cp /etc/rancher/k3s/k3s.yaml .kube/config
-      
-      H. Confirm installation was successful:
-
-        sudo systemctl status k3s
-        kubectl get nodes -o wide
-
-    </details>
-
-11. <details>
     <summary><code>Calico Enterprise</code> is installed on the k8s cluster</summary>
 
       A. Make sure that license.yaml and config.json are updated!
@@ -303,6 +127,183 @@ For more details, see the official documentation: [Configure an ingress gateway]
         --set-file imagePullSecrets.tigera-pull-secret=config.json,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=config.json \
         --namespace tigera-operator  \
         --set-file licenseKeyContent=license.yaml --create-namespace
+
+    </details>
+
+
+2.  <details>
+    <summary>A valid IP pool for loadbalancer services</summary>
+
+        kubectl apply -f - <<EOF
+        apiVersion: projectcalico.org/v3
+        kind: IPPool
+        metadata:
+          name: loadbalancer-ip-pool
+        spec:
+          cidr: 10.10.10.0/26
+          blockSize: 31
+          natOutgoing: true
+          disabled: false
+          assignmentMode: Automatic
+          allowedUses:
+            - LoadBalancer
+        EOF
+    </details>
+
+3.  <details>
+    <summary>Calico BGP Configuration and BGP Peer to advertise serviceLoadBalancerIPs to the bastion or firewall, and peer it with your cluster nodes </summary>
+    
+        kubectl apply -f - <<EOF
+        apiVersion: projectcalico.org/v3
+        kind: BGPConfiguration
+        metadata:
+          name: default
+        spec:
+          logSeverityScreen: Info
+          nodeToNodeMeshEnabled: true
+          nodeMeshMaxRestartTime: 120s
+          asNumber: 64512
+          serviceLoadBalancerIPs:
+          - cidr: 10.10.10.0/26
+          listenPort: 179
+          bindMode: NodeIP
+        ---
+        apiVersion: projectcalico.org/v3
+        kind: BGPPeer
+        metadata:
+          name: my-global-peer
+        spec:
+          peerIP: 10.0.1.10
+          asNumber: 64512
+        EOF
+    </details>
+
+4.  <details>
+    <summary>The bastion/firewall is peered with cluster nodes and is accepting advetised loadbalancer service IPs (Ingress Gateways) </summary>
+
+        watch sudo birdc show protocols
+      
+      Sample of output:
+
+        BIRD 1.6.8 ready.
+        name     proto    table    state  since       info
+        direct1  Direct   master   up     23:42:33    
+        kernel1  Kernel   master   up     23:42:33    
+        device1  Device   master   up     23:42:33    
+        control1 BGP      master   up     23:42:35    Established   
+        worker1  BGP      master   up     23:42:36    Established   
+        worker2  BGP      master   up     23:42:35    Established
+
+      Check that the route `if (net ~ 10.10.10.0/26) then accept;` has been added correctly:
+
+        sudo grep -A 8 "Import filter"  /etc/bird/bird.conf
+
+      If the route is not there, add it with this command:
+
+        sudo sed -i 's/if (net ~ 10.50.0.0\/24) then accept;/if (net ~ 10.50.0.0\/24) then accept;\n                        if (net ~ 10.10.10.0\/26) then accept;/g' /etc/bird/bird.conf
+
+      And restart bird
+
+        sudo systemctl restart bird
+    </details>
+
+5.  <details>
+    <summary>Gateway API support is enabled</summary>
+
+        kubectl apply -f - <<EOF
+        apiVersion: operator.tigera.io/v1
+        kind: GatewayAPI
+        metadata:
+          name: tigera-secure
+        EOF
+    </details>
+
+6.  <details>
+    <summary><code>htpasswd</code> app is installed on the bastion</summary>
+
+        sudo apt install -y apache2-utils
+    </details>
+
+7.  <details>
+    <summary><code>JQ</code> app is installed on the bastion</summary>
+
+        sudo apt install -y jq
+    </details>
+
+8.  <details>
+    <summary><code>HEY</code> app is installed on the bastion</summary>
+
+        sudo apt install -y hey
+    </details>
+
+9.  <details>
+    <summary><code>go</code> tool is installed on the bastion</summary>
+
+        curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+        rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+        source ~/.bashrc
+        go version
+    </details>
+
+10. <details>
+    <summary><code>ingress2gateway</code> is are installed on the bastion</summary>
+
+        git clone https://github.com/kubernetes-sigs/ingress2gateway.git && cd ingress2gateway
+        make build
+        ./ingress2gateway version
+    </details>
+
+11. <details>
+    <summary><code>k3s</code> is deployed on <code>nonk8s1</code> VM</summary>
+
+      A. From the bastion, ssh into the VM:
+
+        ssh nonk8s1
+
+      B. Disable NetworkManager’s cloud setup services, force all kernels to use the legacy cgroup v1 system, and then reboot the system to apply the changes:
+
+        sudo systemctl disable --now nm-cloud-setup.service nm-cloud-setup.timer
+        sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
+        sudo reboot
+
+      C. Wait 2 minutes for the VM to be up and running, then ssh into it again:
+
+        sleep 120
+        ssh nonk8s1
+
+      D. Load kernel modules needed for Kubernetes networking, set sysctl parameters to enable packet forwarding and bridge traffic filtering, and then apply these settings system-wide:
+
+        sudo modprobe overlay
+        sudo modprobe br_netfilter
+        cat <<EOF | sudo tee /etc/sysctl.d/90-kubelet.conf
+        net.bridge.bridge-nf-call-iptables=1
+        net.ipv4.ip_forward=1
+        net.bridge.bridge-nf-call-ip6tables=1
+        EOF
+        sudo sysctl --system
+
+      E. Install iptables utilities:
+
+        sudo yum install -y iptables iptables-services
+
+      F. Download and run the K3s installer to set up a Kubernetes cluster without Flannel or Traefik, using the specified cluster network range and configuration:
+
+        curl -sfL https://get.k3s.io | \
+          K3S_KUBECONFIG_MODE="644" \
+          INSTALL_K3S_EXEC="--flannel-backend=none --cluster-cidr=192.168.0.0/16 --disable-network-policy --disable=traefik" \
+          sh -
+
+      G. Edit k3s config file and copy it in `.kube/config`:
+
+        sudo sed -i 's|server: https://127\.0\.0\.1:6443|server: https://10.0.1.32:6443|' /etc/rancher/k3s/k3s.yaml
+        cp /etc/rancher/k3s/k3s.yaml .kube/config
+      
+      H. Confirm installation was successful:
+
+        sudo systemctl status k3s
+        kubectl get nodes -o wide
 
     </details>
 
