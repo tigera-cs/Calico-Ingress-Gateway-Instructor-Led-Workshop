@@ -134,15 +134,14 @@ In real-world scenarios, authentication mechanisms (like Basic Auth) are often e
     </details>
 
 6.  <details>
-    <summary><code>go, git, make</code> apps are installed on the bastion</summary>
+    <summary><code>go</code> tool is installed on the bastion</summary>
 
         curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
         rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
         export PATH=$PATH:/usr/local/go/bin
+        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+        source ~/.bashrc
         go version
-        echo "---"
-        apt-get install -y git make
-        go install github.com/kubernetes-sigs/ingress2gateway@v0.4.0
     </details>
 
 7.  <details>

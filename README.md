@@ -174,6 +174,25 @@ For more details, see the official documentation: [Configure an ingress gateway]
     </details>
 
 8.  <details>
+    <summary><code>go</code> tool is installed on the bastion</summary>
+
+        curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+        rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+        source ~/.bashrc
+        go version
+    </details>
+
+9.  <details>
+    <summary><code>ingress2gateway</code> is are installed on the bastion</summary>
+
+        git clone https://github.com/kubernetes-sigs/ingress2gateway.git && cd ingress2gateway
+        make build
+        ./ingress2gateway version
+    </details>
+
+10.  <details>
     <summary><code>k3s</code> is deployed on <code>nonk8s1</code> VM</summary>
 
       A. From the bastion, ssh into the VM:
@@ -225,7 +244,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
     </details>
 
-9.  <details>
+11.  <details>
     <summary><code>Calico Enterprise</code> is installed on the k8s cluster</summary>
 
       A. Make sure that license.yaml and config.json are updated!
@@ -288,7 +307,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
     </details>
 
     
-10. <details>
+12. <details>
     <summary><code>Calico Enterprise</code> is installed on the k3s cluster on <code>nonk8s1</code> VM</summary>
 
       A. Copy repository key and license into the VM:
@@ -329,7 +348,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
     </details>
 
-11. <details>
+13. <details>
     <summary><code>Cluster Mesh</code> is deployed between the k8s cluster and the k3s cluster on `nonk8s1` VM</summary>
 
       A. Copy the k3s config file to the bastion and merge it with the existing config file:
@@ -596,6 +615,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
       
       *For more information about Cluster Mesh & Federated Services please visit: [Calico Federation](https://docs.tigera.io/calico-enterprise/latest/multicluster/federation/overview)*
+
 
 ===
 > **Congratulations! You have completed `Introduction & lab setup`!**
