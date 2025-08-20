@@ -317,6 +317,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
         scp license.yaml nonk8s1:license.yaml
 
       B. SSH into the VM and install `Helm`:
+      
         ssh nonk8s1
         sudo curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm
         sudo chmod +x /usr/local/bin/helm
@@ -351,6 +352,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
 13. <details>
     <summary><code>Cluster Mesh</code> is deployed between the k8s cluster and the k3s cluster on `nonk8s1` VM</summary>
+
 
       A. Copy the k3s config file to the bastion and merge it with the existing config file:
 

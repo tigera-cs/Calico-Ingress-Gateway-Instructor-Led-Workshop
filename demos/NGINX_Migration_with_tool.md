@@ -257,7 +257,7 @@ It’s a full example of securing an application with basic authentication and c
       app: my-app
       version: v1
     ports:
-      - port: 80
+      - port: 8080
         targetPort: 80
   EOF
   ```
@@ -323,7 +323,7 @@ It’s a full example of securing an application with basic authentication and c
       app: my-app
       version: v2
     ports:
-      - port: 80
+      - port: 8080
         targetPort: 80
   EOF
   ```
@@ -362,7 +362,7 @@ It’s a full example of securing an application with basic authentication and c
             service:
               name: app-v1
               port:
-                number: 80
+                number: 8080
   EOF
   ```
 
@@ -394,7 +394,7 @@ It’s a full example of securing an application with basic authentication and c
             service:
               name: app-v2
               port:
-                number: 80
+                number: 8080
   EOF
   ```
 
