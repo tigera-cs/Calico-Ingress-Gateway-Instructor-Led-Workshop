@@ -409,7 +409,7 @@ It’s a full example of securing an application with basic authentication and c
 ***5.2*** - Test the connection without the user:
 
   ```
-  while true; do curl -s -kv -H "Host: $HOSTNAME" http://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
+  while true; do curl -s -kv -H "Host: $HOSTNAME" https://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
   ```
 
   You should get an `401 - Authentication Required` error:
@@ -436,7 +436,7 @@ It’s a full example of securing an application with basic authentication and c
 ***5.3*** - Test the connection with the user:
 
   ```
-  while true; do curl -s -k -H "Host: $HOSTNAME" -u foo:bar https://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
+  while true; do curl -s -kv -H "Host: $HOSTNAME" -u foo:bar https://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
 
   ```
 
