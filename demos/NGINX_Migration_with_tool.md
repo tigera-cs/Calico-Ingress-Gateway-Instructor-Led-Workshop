@@ -436,7 +436,7 @@ It’s a full example of securing an application with basic authentication and c
 ***5.3*** - Test the connection with the user:
 
   ```
-  while true; do curl -s -kv -H "Host: $HOSTNAME" -u foo:bar http://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
+  while true; do curl -s -k -H "Host: $HOSTNAME" -u foo:bar https://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
 
   ```
 
@@ -471,7 +471,7 @@ It’s a full example of securing an application with basic authentication and c
 
   Command:
   ```
-  while true; do curl -s -k -H "Host: $HOSTNAME" -u foo:bar http://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
+  while true; do curl -s -k -H "Host: $HOSTNAME" -u foo:bar https://$INGRESS_URL/ | grep "<h1>"; sleep 1; done
   ```
 
   Output:
@@ -535,10 +535,10 @@ It’s a full example of securing an application with basic authentication and c
     rules:
     - backendRefs:
       - name: app-v1
-        port: 80
+        port: 8080
         weight: 80
       - name: app-v2
-        port: 80
+        port: 8080
         weight: 20
       matches:
       - path:
@@ -586,10 +586,10 @@ The final file should look like this:
     rules:
     - backendRefs:
       - name: app-v1
-        port: 80
+        port: 8080
         weight: 80
       - name: app-v2
-        port: 80
+        port: 8080
         weight: 20
       matches:
       - path:
