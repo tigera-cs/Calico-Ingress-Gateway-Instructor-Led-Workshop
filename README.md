@@ -334,11 +334,11 @@ For more details, see the official documentation: [Configure an ingress gateway]
             - cidr: 192.168.0.0/16
               encapsulation: VXLAN
         logCollector:
-        enabled: false
+          enabled: false
         logStorage:
-        enabled: false
+          enabled: false
         manager:
-        enabled: false
+          enabled: false
         EOF
 
         curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-v3.21.2-0.tgz
