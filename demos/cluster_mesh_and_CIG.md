@@ -212,11 +212,11 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
             - cidr: 192.168.0.0/16
               encapsulation: VXLAN
         logCollector:
-        enabled: false
+          enabled: false
         logStorage:
-        enabled: false
+          enabled: false
         manager:
-        enabled: false
+          enabled: false
         EOF
 
         curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-v3.21.2-0.tgz
@@ -536,7 +536,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
   EOF
   ```
 
-#### 2. Define an HTTPRoute to split traffic between backend-app in us-east (local k8s cluster) and backend-app in us-west (remote k3s cluster). To "call" the remote deployment, we need to use the `federated` service `federated-backend-us-west` as `backandRef`.
+#### 2. Define an HTTPRoute to split traffic between backend-app in us-east (local k8s cluster) and backend-app in us-west (remote k3s cluster). To "call" the remote deployment, we need to use the `federated` service `federated-backend-us-west` as `backendRef`.
 
 The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1% to the remote cluster `us-west`.
 
@@ -570,7 +570,11 @@ The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1%
   ```
 
 #### 3. Wait for 30 seconds to allow services and gateway to be ready
+
+```
 sleep 30
+```
+
 
 #### 4. Retrieve the external IP of the Envoy Gateway
 

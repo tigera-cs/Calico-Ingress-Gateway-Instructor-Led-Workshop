@@ -254,12 +254,16 @@ For more details, see the official documentation: [Configure an ingress gateway]
   ```
 
 #### 4. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
   export GATEWAY_STICKY_DEMO=$(kubectl get gateway/sticky-session-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_STICKY_DEMO is: $GATEWAY_STICKY_DEMO"
   ```
 
 #### 6. Test
@@ -268,6 +272,7 @@ From the bastion, send a request to the gateway to get an `header`
 
   ```
   HEADER=$(curl --verbose http://$GATEWAY_STICKY_DEMO/get 2>&1 | grep "session-a" | awk '{print $3}')
+  echo "HEADER is: $HEADER"
   ```
 
 Send 5 requests to the gateway using that `header`

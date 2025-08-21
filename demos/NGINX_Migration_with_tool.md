@@ -403,7 +403,8 @@ It’s a full example of securing an application with basic authentication and c
 ***5.1*** - Save the hostname of the Kubernetes control plane of this lab, which is tied to the NGINX Controller:
 
   ```
-  INGRESS_URL="$(kubectl cluster-info | grep control | awk -F ":" '{print $2}' | sed "s/\/\///g")"
+  export HOSTNAME="echoserver.myingress.com"
+  export INGRESS_URL="$(kubectl cluster-info | grep control | awk -F ":" '{print $2}' | sed "s/\/\///g")"
   ```
 
 ***5.2*** - Test the connection without the user:
@@ -493,7 +494,7 @@ It’s a full example of securing an application with basic authentication and c
 ***6.1*** - Get the translated resourses in the `gateway-resources.yaml` file
 
   ```
-  ./ingress2gateway print --providers=ingress-nginx > gateway-resources.yaml
+  ~/ingress2gateway/ingress2gateway print --providers=ingress-nginx > gateway-resources.yaml
   ```
 
   The `gateway-resources.yaml` should look like this:
@@ -619,11 +620,15 @@ The final file should look like this:
   ```
 
 #### 7. Wait for 30 seconds to allow services and gateway to be ready
+
+```
 sleep 30
+```
 
 #### 8. Retrieve the external IP of the Gateway
 
   ```
+  export HOSTNAME="echoserver.myingress.com"
   export MIGRATION_GATEWAY=$(kubectl get gateway/nginx -o jsonpath='{.status.addresses[0].value}')
   ```
 

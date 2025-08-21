@@ -366,8 +366,9 @@ The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
   ```
 
 #### 7. Wait for 30 seconds to allow services and gateway to be ready
+```
 sleep 30
-
+```
 #### 8. Retrieve the external IP of the Envoy Gateway
 
   ```

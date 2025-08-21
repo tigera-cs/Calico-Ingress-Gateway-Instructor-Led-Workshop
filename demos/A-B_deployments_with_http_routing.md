@@ -432,7 +432,10 @@ In this example, we have one Gateway resource and two TCPRoute resources that di
   ```
 
 #### 4. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+```
+  sleep 30
+```
 
 #### 5. Retrieve the external IP of the Gateway
 

@@ -159,17 +159,12 @@ For more details, see the official documentation: [Configure an ingress gateway]
 This demo showcases how to deploy a simple echo server on Kubernetes with basic HTTP authentication configured through both an NGINX Ingress and a Gateway API setup.
 
 Key steps demonstrated:
-Deploy an echo server with a Deployment and expose it internally with a ClusterIP Service.
-
-Create a basic-auth secret using htpasswd for user authentication.
-
-Configure an NGINX Ingress with annotations to enable basic auth, protecting access to the echo server.
-
-Use curl commands to show how requests are rejected without credentials and accepted with the correct username/password.
-
-Deploy a Gateway and HTTPRoute using the Gateway API (instead of Ingress) with a corresponding security policy for basic auth.
-
-Show how to access the echo server through the Gateway API with authentication, illustrating a migration path from Ingress to Gateway API while maintaining security.
+ - Deploy an echo server with a Deployment and expose it internally with a ClusterIP Service.
+ - Create a basic-auth secret using htpasswd for user authentication.
+ - Configure an NGINX Ingress with annotations to enable basic auth, protecting access to the echo server.
+ - Use curl commands to show how requests are rejected without credentials and accepted with the correct username/password.
+ - Deploy a Gateway and HTTPRoute using the Gateway API (instead of Ingress) with a corresponding security policy for basic auth.
+ - Show how to access the echo server through the Gateway API with authentication, illustrating a migration path from Ingress to Gateway API while maintaining security.
 
 It’s a full example of securing an application with basic authentication via two Kubernetes traffic routing methods.
 
@@ -257,13 +252,13 @@ It’s a full example of securing an application with basic authentication via t
   INGRESS_URL="$(kubectl cluster-info | grep control | awk -F ":" '{print $2}' | sed "s/\/\///g")"
   ```
 
-***4.2*** - Test the connection without the user:
+***4.2*** - Test the connection without providing credentials:
 
   ```
-  curl -kv -I -H "Host: $HOSTNAME" https://$INGRESS_URL
+  curl -k -I -H "Host: $HOSTNAME" https://$INGRESS_URL
   ```
 
-  You should get an `401 - Authentication Required` error:
+  **Result:** You should get an `401 - Authentication Required` error:
 
   ```
   HTTP/2 401
@@ -344,7 +339,10 @@ It’s a full example of securing an application with basic authentication via t
   ```
 
 #### 7. Wait for 30 seconds to allow services and gateway to be ready
+
+```
 sleep 30
+```
 
 #### 8. Retrieve the external IP of the Gateway
 

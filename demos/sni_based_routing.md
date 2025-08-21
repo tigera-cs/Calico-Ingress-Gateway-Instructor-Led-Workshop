@@ -255,12 +255,16 @@ This sections gives a walkthrough to generate multiple certificates correspondin
   ```
 
 #### 4. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
   export GATEWAY_SNI_DEMO=$(kubectl get gateway/sni-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_SNI_DEMO is: $GATEWAY_SNI_DEMO"
   ```
 
 #### 6. Test with no certificate
@@ -464,7 +468,7 @@ Note that all occurrences of `example.com` were just replaced with `sample.com`.
     '
   ```
 
-***6.8*** - Query the backend-sni application thourgh the gateway for `www.example.com`:
+***6.8*** - Query the backend-sni application through the gateway for `www.example.com`:
 
   ```
   curl -v -HHost:www.example.com --resolve "www.example.com:443:${GATEWAY_SNI_DEMO}" \
@@ -473,7 +477,7 @@ Note that all occurrences of `example.com` were just replaced with `sample.com`.
 
   You should have received the same result as before.
 
-***6.9*** - Query the same backend-sni application thourgh the same gateway for `www.sample.com` instead:
+***6.9*** - Query the same backend-sni application through the same gateway for `www.sample.com` instead:
 
   ```
   curl -v -HHost:www.sample.com --resolve "www.sample.com:443:${GATEWAY_SNI_DEMO}" \
