@@ -15,9 +15,9 @@ Welcome to the **Calico Ingress Gateway Instructor Led Workshop**.
 The Calico Ingress Gateway Workshop aims to explain the kubernetes' and IngressAPI native limitations, the differences between IngressAPI and GatewayAPI and the most common use cases where Calico Ingress Gateway can solve.
 
 We hope you enjoyed the presentation! Feel free to download the slides:
-- [Calico Ingress Gateway - Introduction](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Introduction.pdf)
-- [Calico Ingress Gateway - Capabilities](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Capabilities.pdf)
-- [Calico Ingress Gateway - Migration](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Migration.pdf)
+- [Calico Ingress Gateway - Introduction](etc/01%20-%20Calico%20Ingress%20Gateway%20-%20Introduction%20-%20WIP.pptx)
+- [Calico Ingress Gateway - Capabilities](etc/02%20%20-%20Calico%20Ingress%20Gateway%20-%20Capabilities%20-%20WIP.pptx)
+- [Calico Ingress Gateway - Migration](etc/03%20-%20Calico%20Ingress%20Gateway%20-%20Migration%20From%20Ingress%20-%20WIP.pptx)
 
 ---
 
@@ -47,7 +47,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 **This workshop includes the following demos:**
 - A/B deployments with http routing
 - Canary deployments with traffic splitting
-- High Availability & Failoer
+- Service Backend Failover
 - Load balancing with consistent hash
 - Load balancing with round robin
 - Migration from IngressAPI (NGINX) to GatewayAPI(Calico Ingress Gateway)
@@ -208,7 +208,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
     </details>
 
 5.  <details>
-    <summary>Gateway API support is enabled</summary>
+    <summary><code>GatewayAPI</code> support is enabled</summary>
 
         kubectl apply -f - <<EOF
         apiVersion: operator.tigera.io/v1
@@ -239,8 +239,9 @@ For more details, see the official documentation: [Configure an ingress gateway]
 9.  <details>
     <summary><code>go</code> tool is installed on the bastion</summary>
 
-        curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
-        rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
+        sudo  curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+        sudo rm -rf /usr/local/go
+        sudo tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
         export PATH=$PATH:/usr/local/go/bin
         echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
         source ~/.bashrc
@@ -298,18 +299,23 @@ For more details, see the official documentation: [Configure an ingress gateway]
       G. Edit k3s config file and copy it in `.kube/config`:
 
         sudo sed -i 's|server: https://127\.0\.0\.1:6443|server: https://10.0.1.32:6443|' /etc/rancher/k3s/k3s.yaml
-        cp /etc/rancher/k3s/k3s.yaml .kube/config
+        mkdir -p ~/.kube
+        sudo cp /etc/rancher/k3s/k3s.yaml .kube/config
+        sudo chown $(id -u):$(id -g) ~/.kube/config
       
       H. Confirm installation was successful:
 
         sudo systemctl status k3s
+
+      And:
+
         kubectl get nodes -o wide
 
     </details>
 
     
 12. <details>
-    <summary><code>Calico Enterprise</code> is installed on the k3s cluster on <code>nonk8s1</code> VM</summary>
+    <summary><code>Calico Enterprise</code> is installed on the k3s cluster on <code>nonk8s1</code> virtual machine</summary>
 
       A. Copy repository key and license into the VM:
 
@@ -318,11 +324,9 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
       B. SSH into the VM and install `Helm`:
       
-        ssh nonk8s1
-        sudo curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm
-        sudo chmod +x /usr/local/bin/helm
+        ssh ubuntu@nonk8s1 'sudo bash -c "curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm && chmod +x /usr/local/bin/helm"'
 
-      C. Install Calico Enterprise v3.21 Minimal Install using Helm:
+      C. Install Calico Enterprise v3.21 Minimal Install using `Helm`:
 
         cat > values.yaml <<EOF
         installation:
@@ -351,7 +355,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
     </details>
 
 13. <details>
-    <summary><code>Cluster Mesh</code> is deployed between the k8s cluster and the k3s cluster on `nonk8s1` VM</summary>
+    <summary><code>Cluster Mesh</code> is deployed between the k8s cluster and the k3s cluster on <code>nonk8s1</code> virtual machine</summary>
 
 
       A. Copy the k3s config file to the bastion and merge it with the existing config file:

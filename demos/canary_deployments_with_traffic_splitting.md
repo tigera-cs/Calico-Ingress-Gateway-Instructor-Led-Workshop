@@ -4,7 +4,8 @@
 
 * [Welcome!](#welcome)
 * [Overview](#overview)
-* [Before you begin...](#before-you-begin)
+* [High Level Tasks](#high-level-tasks)
+* [Diagram](#diagram)
 * [Demo](#demo)
 * [Clean-up](#clean-up)
 
@@ -16,9 +17,9 @@ Welcome to the **Calico Ingress Gateway Instructor Led Workshop**.
 The Calico Ingress Gateway Workshop aims to explain the kubernetes' and IngressAPI native limitations, the differences between IngressAPI and GatewayAPI and the most common use cases where Calico Ingress Gateway can solve.
 
 We hope you enjoyed the presentation! Feel free to download the slides:
-- [Calico Ingress Gateway - Introduction](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Introduction.pdf)
-- [Calico Ingress Gateway - Capabilities](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Capabilities.pdf)
-- [Calico Ingress Gateway - Migration](etc/Calico%20Ingress%20-%20Gateway%20Workshop%20-%20Migration.pdf)
+- [Calico Ingress Gateway - Introduction](etc/01%20-%20Calico%20Ingress%20Gateway%20-%20Introduction%20-%20WIP.pptx)
+- [Calico Ingress Gateway - Capabilities](etc/02%20%20-%20Calico%20Ingress%20Gateway%20-%20Capabilities%20-%20WIP.pptx)
+- [Calico Ingress Gateway - Migration](etc/03%20-%20Calico%20Ingress%20Gateway%20-%20Migration%20From%20Ingress%20-%20WIP.pptx)
 
 ---
 
@@ -30,123 +31,11 @@ In Kubernetes using Envoy Gateway, canary deployments can be implemented through
 
 ---
 
-### Before you begin...
+### High Level Tasks
 
-**IMPORTANT**
+### Diagram
 
-* Supported CE/CC versions:
-  - Calico Enterprise v3.21.X
-  - Calico Cloud 21.X
-
-**PREREQUISITE**
-
-1.  <details>
-    <summary>A valid IP pool for loadbalancer services</summary>
-
-        kubectl apply -f - <<EOF
-        apiVersion: projectcalico.org/v3
-        kind: IPPool
-        metadata:
-          name: loadbalancer-ip-pool
-        spec:
-          cidr: 10.10.10.0/26
-          blockSize: 31
-          natOutgoing: true
-          disabled: false
-          assignmentMode: Automatic
-          allowedUses:
-            - LoadBalancer
-        EOF
-    </details>
-
-2.  <details>
-    <summary>Calico BGP Configuration and BGP Peer to advertise serviceLoadBalancerIPs to the bastion or firewall, and peer it with your cluster nodes </summary>
-    
-        kubectl apply -f - <<EOF
-        apiVersion: projectcalico.org/v3
-        kind: BGPConfiguration
-        metadata:
-          name: default
-        spec:
-          logSeverityScreen: Info
-          nodeToNodeMeshEnabled: true
-          nodeMeshMaxRestartTime: 120s
-          asNumber: 64512
-          serviceLoadBalancerIPs:
-          - cidr: 10.10.10.0/26
-          listenPort: 179
-          bindMode: NodeIP
-        ---
-        apiVersion: projectcalico.org/v3
-        kind: BGPPeer
-        metadata:
-          name: my-global-peer
-        spec:
-          peerIP: 10.0.1.10
-          asNumber: 64512
-        EOF
-    </details>
-
-3.  <details>
-    <summary>The bastion/firewall is peered with cluster nodes and is accepting advetised loadbalancer service IPs (Ingress Gateways) </summary>
-
-        watch sudo birdc show protocols
-      
-      Sample of output:
-
-        BIRD 1.6.8 ready.
-        name     proto    table    state  since       info
-        direct1  Direct   master   up     23:42:33    
-        kernel1  Kernel   master   up     23:42:33    
-        device1  Device   master   up     23:42:33    
-        control1 BGP      master   up     23:42:35    Established   
-        worker1  BGP      master   up     23:42:36    Established   
-        worker2  BGP      master   up     23:42:35    Established
-
-      Check that the route `if (net ~ 10.10.10.0/26) then accept;` has been added correctly:
-
-        sudo grep -A 8 "Import filter"  /etc/bird/bird.conf
-
-      If the route is not there, add it with this command:
-
-        sudo sed -i 's/if (net ~ 10.50.0.0\/24) then accept;/if (net ~ 10.50.0.0\/24) then accept;\n                        if (net ~ 10.10.10.0\/26) then accept;/g' /etc/bird/bird.conf
-
-      And restart bird
-
-        sudo systemctl restart bird
-    </details>
-
-4.  <details>
-    <summary>Gateway API support is enabled</summary>
-
-        kubectl apply -f - <<EOF
-        apiVersion: operator.tigera.io/v1
-        kind: GatewayAPI
-        metadata:
-          name: tigera-secure
-        EOF
-    </details>
-
-**About Calico Ingress Gateway**
-
-* **Calico Ingress Gateway** is an enterprise-grade ingress solution based on the Kubernetes Gateway API, integrated with Envoy Gateway. It enables advanced, application-layer (L7) traffic control and routing to services within a Kubernetes cluster. Calico Ingress Gateway supports features such as weighted or blue-green load balancing and is designed to provide secure, scalable, and flexible ingress management for cloud-native applications.
-
-* **Gateway API** is an official Kubernetes API for advanced routing to services in a cluster. To read about its use cases, structure and design, please see the official docs. Calico Enterprise provides the following resources and versions of the Gateway API.
-
-  | Resource         | Versions           |
-  |------------------|--------------------|
-  | BackendLBPolicy  | v1alpha2           |
-  | BackendTLSPolicy | v1alpha3           |
-  | GatewayClass     | v1, v1beta1        |
-  | Gateway          | v1, v1beta1        |
-  | GRPCRoute        | v1, v1alpha2       |
-  | HTTPRoute        | v1, v1beta1        |
-  | ReferenceGrant   | v1beta1, v1alpha2  |
-  | TCPRoute         | v1alpha2           |
-  | TLSRoute         | v1alpha2           |
-  | UDPRoute         | v1alpha2           |
-
-For more details, see the official documentation: [Configure an ingress gateway](https://docs.tigera.io/calico-enterprise/latest/networking/gateway-api).
+Coming Soon in v2
 
 ### Demo
 
