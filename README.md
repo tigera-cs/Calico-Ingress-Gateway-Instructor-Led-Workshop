@@ -4,6 +4,7 @@
 
 * [Welcome!](#welcome)
 * [Overview](#overview)
+* [Diagram](#diagram)
 * [Before you begin...](#before-you-begin)
 * [Prerequisite & lab setup](#prerequisite--lab-setup)
 
@@ -57,6 +58,10 @@ For more details, see the official documentation: [Configure an ingress gateway]
 - TLS Passthrough
 
 ---
+
+### Diagram
+
+![GatewayAPI Diagram](etc/gatewayAPI_diagram.png)
 
 ### Before you begin...
 
