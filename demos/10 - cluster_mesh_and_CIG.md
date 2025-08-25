@@ -31,9 +31,46 @@ Kubernetes Ingress has been the standard for managing external access to service
 
 Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high-availability (HA) and fault-tolerant traffic forwarding across multiple Kubernetes clusters. By leveraging Calico’s inter-cluster networking capabilities, traffic can seamlessly route between clusters, ensuring resilience in the event of node or cluster failures. This combination enhances scalability, improves load distribution, and provides a robust failover mechanism, making it ideal for multi-cluster and hybrid cloud deployments.
 
+***NOTE***: - As part of the initial setup done by your instructor, Cluster Mesh and a demo application have been already deployed on your lab.
+
+  <details>
+  <summary>Here’s a <code>breakdown</code> of what the initial setup looks like:</summary>
+
+  **1. Setup federation service accounts & RBAC in both clusters**
+
+    *1.1.* Applies Tigera Calico federation manifests for service accounts and RBAC.
+    *1.2.* Creates a tigera-federation-remote-cluster service account token secret in kube-system.
+    *1.3.* Extracts service account token, CA cert, and API server URL from the current cluster.
+    *1.4.* Generates a kubeconfig file ($CLUSTER_NAME-kubeconfig.yaml) for each cluster using the extracted credentials.
+
+  **2. Configure Calico Cluster Mesh between clusters**
+
+    *2.1* On Cluster1, creates a namespace cluster-mesh-default.
+    *2.2* Stores Cluster2’s kubeconfig as a Kubernetes secret in that namespace.
+    *2.3* Creates a Role/RoleBinding allowing Calico components to access the secret.
+    *2.4* Creates a RemoteClusterConfiguration CRD pointing to Cluster2.
+    *2.5* On Cluster2, repeats the same steps but in reverse (connecting back to Cluster1).
+
+  **3. Deploy demo federated application**
+  
+    *3.1* Clones the Calico Ingress Gateway Instructor-Led Workshop repo if not already present.
+    *3.2* Backs up any existing ~/backend-app and copies the workshop’s backend app.
+    *3.3* On Cluster1 deploys
+      - Deployment, service and service account of the backend app us-east;
+      - Federated service of the backend app us-west.
+    *3.4* On Cluster2 deploys
+      - Deployment, service and service account of the backend app us-west;
+      - Federated service of the backend app us-east.
+
+  </details>
+
 ---
 
 ### High Level Tasks
+
+- Create a Gateway resource
+- Define an `HTTPRoute` to split traffic between `backend-app` in us-east (local k8s cluster) and `backend-app` in us-west (remote k3s cluster)
+- Retrieve the external IP of the Envoy Gateway and **test**
 
 ### Diagram
 
@@ -93,7 +130,10 @@ The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1%
   ```
 
 #### 3. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 4. Retrieve the external IP of the Envoy Gateway
 

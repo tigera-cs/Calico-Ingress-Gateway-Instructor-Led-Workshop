@@ -33,6 +33,11 @@ Envoy Gateway supports TCP routing via Kubernetes Gateway API (e.g., `TCPRoute`)
 
 ### High Level Tasks
 
+- Create two services foo and bar, which are bound to backend-1 and backend-2 deployments.
+- Create a Gateway resource. The gateway will have 2 listeners: 1 per TCP port.
+- Create two TCPRoutes tcp-app-1 and tcp-app-2 with different sectionName.
+- Retrieve the external IP of the Envoy Gateway and **test**
+
 ### Diagram
 
 Coming Soon in v2
@@ -204,12 +209,16 @@ In this example, we have one Gateway resource and two TCPRoute resources that di
   ```
 
 #### 4. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
   export GATEWAY_TCP_DEMO=$(kubectl get gateway/tcp-routing-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_TCP_DEMO is: $GATEWAY_TCP_DEMO"
   ```
 
 #### 6. Test

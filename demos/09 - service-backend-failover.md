@@ -37,6 +37,13 @@ In Kubernetes with Envoy Gateway, failover is handled by configuring multiple ba
 
 ### High Level Tasks
 
+- Create deployments and services for active and passive applications which we will use to test the failover
+- Create the backendAPI resources that are used to represent the active backend and passive backend
+- Create a Gateway resource
+- Create the `BackendTrafficPolicy` with a passive health check setting to detect an transient errors
+- Create the `HTTPRoute` that can route to both backends
+- Retrieve the external IP of the Envoy Gateway and **test**
+
 ### Diagram
 
 Coming Soon in v2
@@ -187,7 +194,7 @@ Coming Soon in v2
   EOF
   ```
 
-#### 4. Create the BackendTrafficPolicy with a passive health check setting to detect an transient errors
+#### 4. Create the `BackendTrafficPolicy` with a passive health check setting to detect an transient errors
   ```
   kubectl apply -f - <<EOF
   apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -248,12 +255,16 @@ Coming Soon in v2
   ```
 
 #### 4. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
   export GATEWAY_HA_DEMO=$(kubectl get gateway/ha-failover-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_HA_DEMO is: $GATEWAY_HA_DEMO"
   ```
 
 #### 6. Test

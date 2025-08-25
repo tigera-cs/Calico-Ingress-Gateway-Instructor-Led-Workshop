@@ -27,11 +27,25 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 Organizations migrate from the older Ingress API to the newer Gateway API because Gateway API offers more flexibility, better extensibility, and clearer separation of concerns for managing traffic routing in Kubernetes. 
 
-In real-world scenarios, authentication mechanisms (like Basic Auth) are often enforced at the ingress layer to secure applications. To simulate this during migration, Basic Auth can be implemented in Envoy Gateway using Envoy’s `SecurityPolicy` or authentication filters, ensuring that security controls are preserved while adopting the more powerful Gateway API.
+In real-world scenarios, authentication mechanisms (like OIDC, JWT, Basic Auth) are often enforced at the ingress layer to secure applications. To simulate this during migration, They can be implemented in Envoy Gateway using Envoy’s `SecurityPolicy` or authentication filters, ensuring that security controls are preserved while adopting the more powerful Gateway API.
+
+***Because OIDC is more complex to setup, for the scope of the demo, we are going to use Basic Auth. However, for a more realistic authentication such as OIDC, steps are the same.***
 
 ---
 
 ### High Level Tasks
+
+- Deploy an application version1 & version2 and expose them internally with ClusterIP Services.
+- Create a basic-auth secret using htpasswd for user authentication.
+- Configure an NGINX Ingress with:
+  - Annotations to enable basic auth, protecting access to the application
+  - Annotations to enable canary deployment.
+- Use curl commands to show how requests are:
+  - Rejected without credentials
+  - Accepted with the correct username/password
+  - Split between version1 and version2
+- Deploy a Gateway and HTTPRoute using the Gateway API (instead of Ingress) with a corresponding security policy for basic auth and traffic splitting.
+- Show how to access the application through the Gateway API with authentication, illustrating a migration path from Ingress to Gateway API while maintaining security and canary deployment.
 
 ### Diagram
 
@@ -41,25 +55,7 @@ Coming Soon in v2
 
 This demo showcases how to deploy a simple app deployment on Kubernetes with basic HTTP authentication and canary deployment (version1 & version2) configured through both an NGINX Ingress and a Gateway API setup.
 
-Key steps demonstrated:
-Deploy an application version1 & version2 and expose them internally with ClusterIP Services.
-
-Create a basic-auth secret using htpasswd for user authentication.
-
-Configure an NGINX Ingress with:
-- Annotations to enable basic auth, protecting access to the application
-- Annotations to enable canary deployment.
-
-Use curl commands to show how requests are:
-- Rejected without credentials
-- Accepted with the correct username/password
-- Split between version1 and version2
-
-Deploy a Gateway and HTTPRoute using the Gateway API (instead of Ingress) with a corresponding security policy for basic auth and traffic splitting.
-
-Show how to access the application through the Gateway API with authentication, illustrating a migration path from Ingress to Gateway API while maintaining security and canary deployment.
-
-It’s a full example of securing an application with basic authentication and canary deployment, via two Kubernetes traffic routing methods.
+It’s a full example of securing an application with authentication and canary deployment, via two Kubernetes traffic routing methods.
 
 #### 1. Deploy version 1 of the app
 ***1.1*** - Create a ConfigMap with an HTML file for version 1
@@ -267,7 +263,8 @@ It’s a full example of securing an application with basic authentication and c
 ***5.1*** - Save the hostname of the Kubernetes control plane of this lab, which is tied to the NGINX Controller:
 
   ```
-  INGRESS_URL="$(kubectl cluster-info | grep control | awk -F ":" '{print $2}' | sed "s/\/\///g")"
+  export HOSTNAME="echoserver.myingress.com"
+  export INGRESS_URL="$(kubectl cluster-info | grep control | awk -F ":" '{print $2}' | sed "s/\/\///g")"
   ```
 
 ***5.2*** - Test the connection without the user:
@@ -357,19 +354,12 @@ It’s a full example of securing an application with basic authentication and c
 ***6.1*** - Get the translated resourses in the `gateway-resources.yaml` file
 
   ```
-  ./ingress2gateway print --providers=ingress-nginx > gateway-resources.yaml
+  ~/ingress2gateway/ingress2gateway print --providers=ingress-nginx > gateway-resources.yaml
   ```
 
   The `gateway-resources.yaml` should look like this:
 
   ```
-  Notifications from INGRESS-NGINX:
-  +--------------+--------------------------------------------------------------------------------------------+---------------------------------------------------------------+
-  | MESSAGE TYPE |                                        NOTIFICATION                                        |                        CALLING OBJECT                         |
-  +--------------+--------------------------------------------------------------------------------------------+---------------------------------------------------------------+
-  | INFO         | parsed canary annotations of ingress and patched httproute.spec.rules[].backendRefs fields | HTTPRoute: default/ingress-with-auth-echoserver-myingress-com |
-  +--------------+--------------------------------------------------------------------------------------------+---------------------------------------------------------------+
-
   apiVersion: gateway.networking.k8s.io/v1
   kind: Gateway
   metadata:
@@ -413,7 +403,7 @@ It’s a full example of securing an application with basic authentication and c
   ```
 
 ***6.2*** - Edit the file to:
-    - Remove the initial lines (description of the `ingress2gateway` activity)
+    - If present, remove the initial lines (description of the `ingress2gateway` activity)
     - Replace the `gatewayClassName` from `nginx` to `tigera-gateway-class`
 
 ***6.3*** - Note that the Authentication annotation has not been translated in a GatewayAPI resource because the tool is not able to do it. Manually add a `SecurityPolicy` resource which will enforce the authentication. For more information about `basic auth` with `SecurityPolicy` please visit [this](https://gateway.envoyproxy.io/docs/tasks/security/basic-auth/) page.
@@ -483,12 +473,18 @@ The final file should look like this:
   ```
 
 #### 7. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 8. Retrieve the external IP of the Gateway
 
   ```
+  export HOSTNAME="echoserver.myingress.com"
   export MIGRATION_GATEWAY=$(kubectl get gateway/nginx -o jsonpath='{.status.addresses[0].value}')
+  echo "HOSTNAME is: $HOSTNAME"
+  echo "MIGRATION_GATEWAY is: $MIGRATION_GATEWAY"
   ```
 
 #### 9. TEST Gateway

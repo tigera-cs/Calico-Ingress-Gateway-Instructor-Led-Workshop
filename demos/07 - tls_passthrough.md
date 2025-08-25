@@ -34,6 +34,13 @@ Envoy Gateway supports TLS passthrough by routing TCP connections without termin
 
 ### High Level Tasks
 
+- Deploy certificates and secret which will be used by the `passthrough-echoserver` application to terminate the traffic
+- Create a Service and a Deployment for the `passthrough-echoserver` application
+- Create a Gateway resource
+- Create a TLSRoute tls-passthrough which routes traffic to the `passthrough-echoserver` service for the hostname `passthrough.example.com`
+- Patch the Gateway to include a TLS listener that listens on port 6443 and is configured for TLS mode Passthrough
+- Retrieve the external IP of the Gateway and **test**
+
 ### Diagram
 
 Coming Soon in v2

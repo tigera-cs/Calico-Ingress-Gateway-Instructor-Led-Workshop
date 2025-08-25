@@ -33,6 +33,11 @@ In Kubernetes with Envoy Gateway, round-robin is one of the default load balanci
 
 ### High Level Tasks
 
+- Create a deployment named Backend which we will use to test round robin load balancing. The deployment will have 4 replicas.
+- Create a Gateway resource
+- Create the backend traffic policy and the http route to configure the load balancing
+- Retrieve the external IP of the Envoy Gateway and **test**
+
 ### Diagram
 
 Coming Soon in v2
@@ -152,13 +157,17 @@ Coming Soon in v2
   EOF
   ```
 
-#### 4. Wait for 60 seconds to allow services and gateway to be ready
-sleep 60
+#### 4. Wait for 30 seconds to allow services and gateway to be ready
+
+  ```
+  sleep 30
+  ```
 
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
   export GATEWAY_LB_DEMO=$(kubectl get gateway/load-balancing-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_LB_DEMO is: $GATEWAY_LB_DEMO"
   ```
 
 #### 6. Test

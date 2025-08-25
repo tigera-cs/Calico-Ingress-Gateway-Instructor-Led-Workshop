@@ -33,30 +33,19 @@ In Kubernetes using Envoy Gateway, canary deployments can be implemented through
 
 ### High Level Tasks
 
+- Deploy version1 and version2 of an application, in a dedicated namespace
+- Deploy a gateway resource
+- Define an HTTPRoute to split traffic between app-v1 and app-v2
+- Create a ReferenceGrant to allow HTTPRoute in the default namespace to reference services in my-app namespace
+- Retrieve the external IP of the Envoy Gateway and **test**
+
 ### Diagram
 
 Coming Soon in v2
 
 ### Demo
 
-#### 1. Create a Gateway resource named "canary-deployment-gateway" using the "tigera-gateway-class"
-
-  ```
-  kubectl apply -f - <<EOF
-  apiVersion: gateway.networking.k8s.io/v1
-  kind: Gateway
-  metadata:
-    name: canary-deployment-gateway
-  spec:
-    gatewayClassName: tigera-gateway-class
-    listeners:
-      - name: http
-        protocol: HTTP
-        port: 80
-  EOF
-  ```
-
-#### 2. Create a new namespace called "my-app" to isolate resources
+#### 1. Create a new namespace called "my-app" to isolate resources
   ```
   cat << EOF | kubectl create -f -
   apiVersion: v1
@@ -66,8 +55,8 @@ Coming Soon in v2
   EOF
   ```
 
-#### 3. Deploy version 1 of the app
-***3.1*** - Create a ConfigMap with an HTML file for version 1
+#### 2. Deploy version 1 of the app
+***2.1*** - Create a ConfigMap with an HTML file for version 1
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -81,7 +70,7 @@ Coming Soon in v2
   EOF
   ```
 
-***3.2*** - Deploy an Nginx container serving the HTML file
+***2.2*** - Deploy an Nginx container serving the HTML file
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: apps/v1
@@ -116,7 +105,7 @@ Coming Soon in v2
   EOF
   ```
 
-***3.3*** - Expose the deployment as a Service
+***2.3*** - Expose the deployment as a Service
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -134,9 +123,9 @@ Coming Soon in v2
   EOF
   ```
 
-#### 4. Deploy version 2 of the app following the same pattern as version 1
+#### 3. Deploy version 2 of the app following the same pattern as version 1
 
-***4.1*** - Create a ConfigMap with an HTML file for version 2
+***3.1*** - Create a ConfigMap with an HTML file for version 2
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -150,7 +139,7 @@ Coming Soon in v2
   EOF
   ```
 
-***4.2*** - Deploy an Nginx container serving the HTML file
+***3.2*** - Deploy an Nginx container serving the HTML file
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: apps/v1
@@ -185,7 +174,7 @@ Coming Soon in v2
   EOF
   ```
 
-***4.3*** - Expose the deployment as a Service
+***3.3*** - Expose the deployment as a Service
   ```
   cat << EOF | kubectl apply -f -
   apiVersion: v1
@@ -200,6 +189,23 @@ Coming Soon in v2
     ports:
       - port: 80
         targetPort: 80
+  EOF
+  ```
+
+#### 4. Create a Gateway resource named "canary-deployment-gateway" using the "tigera-gateway-class"
+
+  ```
+  kubectl apply -f - <<EOF
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    name: canary-deployment-gateway
+  spec:
+    gatewayClassName: tigera-gateway-class
+    listeners:
+      - name: http
+        protocol: HTTP
+        port: 80
   EOF
   ```
 
@@ -255,7 +261,10 @@ The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
   ```
 
 #### 7. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 8. Retrieve the external IP of the Envoy Gateway
 

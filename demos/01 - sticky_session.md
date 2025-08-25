@@ -35,6 +35,11 @@ Use session persistence when your app is stateful and you need explicit control 
 
 ### High Level Tasks
 
+- Create a deployment named Backend which we will use to test sticky session / session persistence. The deployment will have 4 replicas.
+- Create a Gateway resource named "sticky-session-gateway" using the "tigera-gateway-class"
+- Create the http route to configure the session persistence 
+- Retrieve the external IP of the Envoy Gateway and **test**
+
 ### Diagram
 
 Coming Soon in v2
@@ -143,12 +148,16 @@ Coming Soon in v2
   ```
 
 #### 4. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
   export GATEWAY_STICKY_DEMO=$(kubectl get gateway/sticky-session-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_STICKY_DEMO is: $GATEWAY_STICKY_DEMO"
   ```
 
 #### 6. Test
@@ -157,6 +166,7 @@ From the bastion, send a request to the gateway to get an `header`
 
   ```
   HEADER=$(curl --verbose http://$GATEWAY_STICKY_DEMO/get 2>&1 | grep "session-a" | awk '{print $3}')
+  echo "HEADER is: $HEADER"
   ```
 
 Send 5 requests to the gateway using that `header`

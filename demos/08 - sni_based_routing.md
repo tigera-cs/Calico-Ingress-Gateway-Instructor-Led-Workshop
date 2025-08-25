@@ -33,6 +33,17 @@ Envoy Gateway supports SNI-based TLS routing using the Kubernetes Gateway API wi
 
 ### High Level Tasks
 
+- Create a ServiceAccount, a Service and a Deployment for the `backend-sni` application
+- Create a Gateway resource
+- Create an HTTPRoute `backend-sni` which routes traffic to the `backend-sni` service
+- Retrieve the external IP of the Envoy Gateway and **test** with no certificate
+- Generate self-signed RSA derived Server certificate and private key, and configure those in the Gateway listener configuration to terminate HTTPS traffic for `example.com`
+- Update the Gateway to include an HTTPS listener that listens on port 443 and references the `example-cert` Secret
+- Query the example app through the Gateway on port 443 and validate the server's certificate using `example.com.crt`
+- Generate self-signed RSA derived Server certificate and private key, and configure those in the Gateway listener configuration to terminate HTTPS traffic for `sample.com`
+- Update the Gateway configuration to accommodate the new Certificate which will be used to Terminate TLS traffic for `www.sample.com`
+- Patch the HTTPRoute to include `www.sample.com` and **test** both `www.example.com` and `www.sample.com`
+
 ### Diagram
 
 Coming Soon in v2
@@ -144,17 +155,21 @@ This sections gives a walkthrough to generate multiple certificates correspondin
   ```
 
 #### 4. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 5. Retrieve the external IP of the Envoy Gateway
 
   ```
   export GATEWAY_SNI_DEMO=$(kubectl get gateway/sni-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_SNI_DEMO is: $GATEWAY_SNI_DEMO"
   ```
 
 #### 6. Test with no certificate
 
-***6.1*** - From the bastion, send a request to the gateway and get a response as shown below:
+From the bastion, send a request to the gateway and get a response as shown below:
 
   ```
   curl --verbose --header "Host: www.example.com" http://$GATEWAY_SNI_DEMO/get
@@ -210,7 +225,7 @@ sleep 30
   * Connection #0 to host 10.10.10.22 left intact
   ```
 
-***6.2*** - Generate self-signed RSA derived Server certificate and private key, and configure those in the Gateway listener configuration to terminate HTTPS traffic for `example.com`
+#### 7. Generate self-signed RSA derived Server certificate and private key, and configure those in the Gateway listener configuration to terminate HTTPS traffic for `example.com`
 
   ```
   openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj '/O=example Inc./CN=example.com' -keyout example.com.key -out example.com.crt
@@ -219,7 +234,7 @@ sleep 30
   kubectl create secret tls example-cert --key=www.example.com.key --cert=www.example.com.crt
   ```
 
-***6.3*** - Update the Gateway to include an HTTPS listener that listens on port `443` and references the `example-cert` `Secret`:
+#### 8. Update the Gateway to include an HTTPS listener that listens on port `443` and references the `example-cert` `Secret`:
 
   ```
   kubectl patch gateway sni-gateway --type=json --patch '
@@ -237,7 +252,7 @@ sleep 30
             name: example-cert
     '
   ```
-***6.4*** - Query the example app through the Gateway on port 443 and validate the server's certificate using example.com.crt
+#### 9. Query the example app through the Gateway on port 443 and validate the server's certificate using `example.com.crt`
 
   ```
   curl -v -HHost:www.example.com --resolve "www.example.com:443:${GATEWAY_SNI_DEMO}" \
@@ -322,7 +337,8 @@ sleep 30
   * Connection #0 to host www.example.com left intact
   ```
 
-***6.5*** - Generate self-signed RSA derived Server certificate and private key, and configure those in the Gateway listener configuration to terminate HTTPS traffic for `'sample.com'`
+#### 10. Generate self-signed RSA derived Server certificate and private key, and configure those in the Gateway listener configuration to terminate HTTPS traffic for `sample.com`
+
 Note that all occurrences of `example.com` were just replaced with `sample.com`.
 
   ```
@@ -332,7 +348,7 @@ Note that all occurrences of `example.com` were just replaced with `sample.com`.
   kubectl create secret tls sample-cert --key=www.sample.com.key --cert=www.sample.com.crt
   ```
 
-***6.6*** -  Update the Gateway configuration to accommodate the new Certificate which will be used to Terminate TLS traffic for `www.sample.com`:
+#### 11. Update the Gateway configuration to accommodate the new Certificate which will be used to Terminate TLS traffic for `www.sample.com`:
 
   ```
   kubectl patch gateway sni-gateway --type=json --patch '
@@ -343,7 +359,7 @@ Note that all occurrences of `example.com` were just replaced with `sample.com`.
     '
   ```
 
-***6.7*** -  Path the `HTTPRoute` to include `www.sample.com`:
+#### 12. Patch the `HTTPRoute` to include `www.sample.com`:
 
   ```
   kubectl patch httproute backend-sni --type=json --patch '
@@ -353,7 +369,7 @@ Note that all occurrences of `example.com` were just replaced with `sample.com`.
     '
   ```
 
-***6.8*** - Query the backend-sni application thourgh the gateway for `www.example.com`:
+#### 13. Query the backend-sni application through the gateway for `www.example.com`:
 
   ```
   curl -v -HHost:www.example.com --resolve "www.example.com:443:${GATEWAY_SNI_DEMO}" \
@@ -362,7 +378,7 @@ Note that all occurrences of `example.com` were just replaced with `sample.com`.
 
   You should have received the same result as before.
 
-***6.9*** - Query the same backend-sni application thourgh the same gateway for `www.sample.com` instead:
+#### 14. Query the same backend-sni application through the same gateway for `www.sample.com` instead:
 
   ```
   curl -v -HHost:www.sample.com --resolve "www.sample.com:443:${GATEWAY_SNI_DEMO}" \
