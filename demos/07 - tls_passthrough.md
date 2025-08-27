@@ -182,6 +182,7 @@ sleep 30
 
   ```
   export GATEWAY_TLS_DEMO=$(kubectl get gateway/tls-passthrough-gateway -o jsonpath='{.status.addresses[0].value}')
+  echo "GATEWAY_TLS_DEMO is: $GATEWAY_TLS_DEMO"
   ```
 
 #### 6. Test
