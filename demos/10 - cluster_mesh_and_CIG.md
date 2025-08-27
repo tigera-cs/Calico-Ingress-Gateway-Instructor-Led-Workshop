@@ -175,7 +175,6 @@ From the bastion, continuously send requests to the external IP and print the re
   kubectl delete deploy backend-us-west
   kubectl delete svc backend-us-west
   kubectl delete svc federated-backend-us-east
-  kubectl delete sa backend
   ```
 
 ===
