@@ -41,7 +41,7 @@ In Kubernetes using Envoy Gateway, canary deployments can be implemented through
 
 ### Diagram
 
-Coming Soon in v2
+![Canary Deployment Diagram](etc/canary_diagram.png)
 
 ### Demo
 
