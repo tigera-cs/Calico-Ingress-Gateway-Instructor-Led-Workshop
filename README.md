@@ -46,16 +46,18 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 For more details, see the official documentation: [Configure an ingress gateway](https://docs.tigera.io/calico-enterprise/latest/networking/gateway-api).
 
 **This workshop includes the following demos:**
+- Advanced routing with sticky sessions / session peristence using header
+- Load balancing with round robin
+- Load balancing with consistent hash
 - A/B deployments with http routing
 - Canary deployments with traffic splitting
-- Service Backend Failover
-- Load balancing with consistent hash
-- Load balancing with round robin
-- Migration from IngressAPI (NGINX) to GatewayAPI(Calico Ingress Gateway)
 - Advanced TCP routing
-- Advanced routing with sticky sessions / session peristence using `header`
-- Security routing based on SNI
 - TLS Passthrough
+- Security routing based on SNI
+- Service Backend Failover
+- Cluster Mesh and Calico Ingress Gateway - traffic splitting between services on separate clusters 
+- Migration from IngressAPI (NGINX) to GatewayAPI(Calico Ingress Gateway)
+- TLS termination for TCP traffic (SSL Offload)
 
 ---
 
