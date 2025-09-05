@@ -350,6 +350,10 @@ For more details, see the official documentation: [Configure an ingress gateway]
           enabled: false
         manager:
           enabled: false
+        intrusionDetection:
+          enabled: false
+        policyRecommendation:
+          enabled: false
         EOF
 
         curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-v3.21.2-0.tgz
