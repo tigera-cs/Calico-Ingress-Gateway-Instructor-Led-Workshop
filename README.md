@@ -324,14 +324,15 @@ For more details, see the official documentation: [Configure an ingress gateway]
 12. <details>
     <summary><code>Calico Enterprise</code> is installed on the k3s cluster on <code>nonk8s1</code> virtual machine</summary>
 
-      A. Copy repository key and license into the VM:
+      A. ***Make sure you are on the bastion and not on the VM!!!*** Then copy repository key and license into the VM:
 
         scp config.json nonk8s1:config.json
         scp license.yaml nonk8s1:license.yaml
 
       B. SSH into the VM and install `Helm`:
       
-        ssh ubuntu@nonk8s1 'sudo bash -c "curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm && chmod +x /usr/local/bin/helm"'
+        ssh ubuntu@nonk8s1
+        sudo bash -c "curl -L https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -o /usr/local/bin/helm && chmod +x /usr/local/bin/helm"
 
       C. Install Calico Enterprise v3.21 Minimal Install using `Helm`:
 
@@ -369,7 +370,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
     <summary><code>Cluster Mesh</code> is deployed between the k8s cluster and the k3s cluster on <code>nonk8s1</code> virtual machine</summary>
 
 
-      A. Copy the k3s config file to the bastion and merge it with the existing config file:
+      A. ***Make sure you are on the bastion and not on the VM!!!*** Then copy the k3s config file to the bastion and merge it with the existing config file:
 
         ssh nonk8s1 "sudo cat /etc/rancher/k3s/k3s.yaml" > k3s.yaml
         KUBECONFIG=~/.kube/config:k3s.yaml kubectl config view --merge --flatten > /tmp/config
