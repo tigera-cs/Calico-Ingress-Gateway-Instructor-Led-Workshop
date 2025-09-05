@@ -46,18 +46,18 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 For more details, see the official documentation: [Configure an ingress gateway](https://docs.tigera.io/calico-enterprise/latest/networking/gateway-api).
 
 **This workshop includes the following demos:**
-- Advanced routing with sticky sessions / session peristence using header
-- Load balancing with round robin
-- Load balancing with consistent hash
-- A/B deployments with http routing
-- Canary deployments with traffic splitting
-- Advanced TCP routing
-- TLS Passthrough
-- Security routing based on SNI
-- Service Backend Failover
-- Cluster Mesh and Calico Ingress Gateway - traffic splitting between services on separate clusters 
-- Migration from IngressAPI (NGINX) to GatewayAPI(Calico Ingress Gateway)
-- TLS termination for TCP traffic (SSL Offload)
+- [Advanced routing with sticky sessions / session peristence using header](demos/01%20-%20sticky_session.md)
+- [Load balancing with round robin](demos/02%20-%20load_balancing_round_robin.md)
+- [Load balancing with consistent hash](demos/03%20-%20load_balancing_consistent_hash.md)
+- [A/B deployments with http routing](demos/04%20-%20A-B_deployments_with_http_routing.md)
+- [Canary deployments with traffic splitting](demos/05%20-%20canary_deployments_with_traffic_splitting.md)
+- [Advanced TCP routing](demos/06%20-%20tcp_route.md)
+- [TLS Passthrough](demos/07%20-%20tls_passthrough.md)
+- [Security routing based on SNI](demos/08%20-%20sni_based_routing.md)
+- [Service Backend Failover](demos/09%20-%20service-backend-failover.md)
+- [Cluster Mesh and Calico Ingress Gateway - traffic splitting between services on separate clusters ](demos/10%20-%20cluster_mesh_and_CIG.md)
+- [Migration from IngressAPI (NGINX) to GatewayAPI(Calico Ingress Gateway)](demos/11%20-%20NGINX_Migration_with_tool.md)
+- [TLS termination for TCP traffic (SSL Offload)](demos/12%20-%20ssl_offload_termination.md)
 
 ---
 
@@ -626,10 +626,16 @@ For more details, see the official documentation: [Configure an ingress gateway]
         kubectl config use-context $CLUSTER1_NAME
 
     </details>
-
       
       *For more information about Cluster Mesh & Federated Services please visit: [Calico Federation](https://docs.tigera.io/calico-enterprise/latest/multicluster/federation/overview)*
 
+---
 
-===
+***IMPORTANT:*** Make sure that you are connected to the right context before proceeding with the demos:
+  ```
+  kubectl config use-context kubernetes-admin
+  ```
+
+---
+
 > **Congratulations! You have completed `Introduction & lab setup`!**

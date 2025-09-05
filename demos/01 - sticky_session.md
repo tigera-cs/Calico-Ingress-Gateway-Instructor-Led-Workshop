@@ -179,9 +179,6 @@ Send 5 requests to the gateway using that `header`
 As a result, you should see all responses coming from the same pod. Sample:
 
   ```
-  tigera@bastion:~$ for i in `seq 5`; do
-  >     curl -H "Session-A: $HEADER" http://$GATEWAY_STICKY_DEMO/get 2>/dev/null | grep pod
-  > done
   "pod": "backend-765694d47f-wn8hp"
   "pod": "backend-765694d47f-wn8hp"
   "pod": "backend-765694d47f-wn8hp"

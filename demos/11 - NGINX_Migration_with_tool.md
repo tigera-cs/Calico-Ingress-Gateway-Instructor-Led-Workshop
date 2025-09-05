@@ -58,6 +58,13 @@ This demo showcases how to deploy a simple app deployment on Kubernetes with bas
 It’s a full example of securing an application with authentication and canary deployment, via two Kubernetes traffic routing methods.
 
 #### 1. Deploy version 1 of the app
+
+***IMPORTANT:*** Make sure that you are connected to the right context:
+
+  ```
+  kubectl config use-context kubernetes-admin
+  ```
+
 ***1.1*** - Create a ConfigMap with an HTML file for version 1
   ```
   cat << EOF | kubectl apply -f -
@@ -403,8 +410,8 @@ It’s a full example of securing an application with authentication and canary 
   ```
 
 ***6.2*** - Edit the file to:
-    - If present, remove the initial lines (description of the `ingress2gateway` activity)
-    - Replace the `gatewayClassName` from `nginx` to `tigera-gateway-class`
+  - If present, remove the initial lines (description of the `ingress2gateway` activity)
+  - Replace the `gatewayClassName` from `nginx` to `tigera-gateway-class`
 
 ***6.3*** - Note that the Authentication annotation has not been translated in a GatewayAPI resource because the tool is not able to do it. Manually add a `SecurityPolicy` resource which will enforce the authentication. For more information about `basic auth` with `SecurityPolicy` please visit [this](https://gateway.envoyproxy.io/docs/tasks/security/basic-auth/) page.
 

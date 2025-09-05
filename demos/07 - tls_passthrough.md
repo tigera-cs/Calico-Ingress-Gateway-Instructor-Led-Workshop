@@ -176,7 +176,10 @@ This sections gives a walkthrough to generate multiple certificates correspondin
   ```
 
 #### 6. Wait for 30 seconds to allow services and gateway to be ready
-sleep 30
+
+  ```
+  sleep 30
+  ```
 
 #### 7. Retrieve the external IP of the Gateway
 

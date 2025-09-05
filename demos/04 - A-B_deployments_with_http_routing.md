@@ -25,9 +25,9 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 ### Overview
 
-TCP routing is used when applications communicate over raw TCP connections rather than HTTP, such as databases (PostgreSQL, MySQL), message brokers (Redis, MQTT), or custom TCP-based protocols. In Kubernetes, managing access to these services externally—especially with advanced traffic control or multi-tenant routing—requires TCP-aware solutions.
+A/B deployment (or traffic splitting) is used to gradually roll out new versions of an application (e.g., v1 and v2) by sending a portion of HTTP traffic to each version. This allows teams to test new features or performance under real conditions with minimal risk.
 
-Envoy Gateway supports TCP routing via Kubernetes Gateway API (e.g., `TCPRoute`), enabling layer 4 (L4) routing for TCP traffic. This allows you to define rules that forward TCP connections to specific backends (like a DB service) based on port or other connection parameters, offering centralized, declarative control over TCP traffic across services.
+Calico Ingress Gateway, using the Kubernetes Gateway API and `HTTPRoute`, supports traffic splitting by routing HTTP requests to different backend services based on defined weights. For example, you can route 80% of traffic to v1 and 20% to v2, and adjust these weights over time—all declaratively via Kubernetes manifests.
 
 ---
 
