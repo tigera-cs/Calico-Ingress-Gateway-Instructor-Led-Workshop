@@ -374,10 +374,13 @@ For more details, see the official documentation: [Configure an ingress gateway]
       A. ***Make sure you are on the bastion and not on the VM!!!*** Then copy the k3s config file to the bastion and merge it with the existing config file:
 
         ssh nonk8s1 "sudo cat /etc/rancher/k3s/k3s.yaml" > k3s.yaml
+      
+      B. Wait 2 seconds then:
+
         KUBECONFIG=~/.kube/config:k3s.yaml kubectl config view --merge --flatten > /tmp/config
         mv /tmp/config ~/.kube/config
 
-      B. Rename the context of the k8s cluster and copy the following script in the `cluster-mesh.sh` script:
+      C. Rename the context of the k8s cluster and copy the following script in the `cluster-mesh.sh` script:
 
         kubectl config rename-context kubernetes-admin@kubernetes kubernetes-admin
 
