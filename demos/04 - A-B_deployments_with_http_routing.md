@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 A/B deployment (or traffic splitting) is used to gradually roll out new versions of an application (e.g., v1 and v2) by sending a portion of HTTP traffic to each version. This allows teams to test new features or performance under real conditions with minimal risk.
 
-Calico Ingress Gateway, using the Kubernetes Gateway API and `HTTPRoute`, supports traffic splitting by routing HTTP requests to different backend services based on defined weights. For example, you can route 80% of traffic to v1 and 20% to v2, and adjust these weights over time—all declaratively via Kubernetes manifests.
+Calico Ingress Gateway, using the Kubernetes Gateway API and `HTTPRoute`, supports traffic splitting by routing HTTP requests to different backend services based on host, header, and path fields. 
 
 ---
 
