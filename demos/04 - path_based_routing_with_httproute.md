@@ -604,7 +604,7 @@ In this example, we have one Gateway resource and two TCPRoute resources that di
   ```
 
 ===
-> **Congratulations! You have completed `Calico Ingress Gateway Workshop - A/B Deployment with HTTP Routing'`!**
+> **Congratulations! You have completed `Calico Ingress Gateway Workshop - Path-Based routing with HTTPRoute'`!**
 
 ---
 **Credits:** Portions of this guide are based on or derived from the [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/tasks/traffic/http-routing/).
