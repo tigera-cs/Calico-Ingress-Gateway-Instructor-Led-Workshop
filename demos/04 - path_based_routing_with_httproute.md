@@ -1,4 +1,4 @@
-# Calico Ingress Gateway - A/B Deployment with HTTP Routing
+# Calico Ingress Gateway - Path-Based routing with HTTPRoute
 
 ### Table of Contents
 
@@ -25,9 +25,9 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 ### Overview
 
-A/B deployment (or traffic splitting) is used to gradually roll out new versions of an application (e.g., v1 and v2) by sending a portion of HTTP traffic to each version. This allows teams to test new features or performance under real conditions with minimal risk.
+Organizations often need to expose multiple versions of an application or multiple services under the same domain, differentiated by URL paths (e.g., /api/ vs /dashboard/). This allows clean separation of traffic, simpler DNS management, and flexible rollout strategies such as feature previews or service consolidation behind a single entry point.
 
-Calico Ingress Gateway, using the Kubernetes Gateway API and `HTTPRoute`, supports traffic splitting by routing HTTP requests to different backend services based on host, header, and path fields. 
+Calico Ingress Gateway, uses the `HTTPRoute` resource to define path-based routing rules. You can match on path prefixes, exact paths, or regex-like patterns, and direct requests to the appropriate backend service. This enables fine-grained, declarative routing at L7, managed centrally in Kubernetes manifests.
 
 ---
 

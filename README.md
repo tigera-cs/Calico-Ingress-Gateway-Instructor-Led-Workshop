@@ -49,7 +49,7 @@ For more details, see the official documentation: [Configure an ingress gateway]
 - [Advanced routing with sticky sessions / session peristence using header](demos/01%20-%20sticky_session.md)
 - [Load balancing with round robin](demos/02%20-%20load_balancing_round_robin.md)
 - [Load balancing with consistent hash](demos/03%20-%20load_balancing_consistent_hash.md)
-- [A/B deployments with http routing](demos/04%20-%20A-B_deployments_with_http_routing.md)
+- [Path Based routing with HTTPRoute](demos/04%20-%20path_based_routing_with_httproute.md)
 - [Canary deployments with traffic splitting](demos/05%20-%20canary_deployments_with_traffic_splitting.md)
 - [Advanced TCP routing](demos/06%20-%20tcp_route.md)
 - [TLS Passthrough](demos/07%20-%20tls_passthrough.md)
