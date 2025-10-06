@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 In multi-tenant or multi-domain environments, a single ingress point often needs to serve multiple TLS-secured applications, each with its own domain and certificate (e.g., `www.example.com` and `www.sample.com`). Server Name Indication (SNI) in TLS allows the server to choose the correct certificate based on the hostname requested by the client during the handshake.
 
-Envoy Gateway supports SNI-based TLS routing using the Kubernetes Gateway API with Gateway and TLSRoute resources. You can associate different TLS certificates with different hostnames, and Envoy will automatically select the appropriate certificate during the TLS handshake using SNI. This enables secure, multi-domain ingress with clean separation and centralized management—all declaratively configured in Kubernetes.
+Calico Ingress Gateway supports SNI-based TLS routing using the Kubernetes Gateway API with Gateway and TLSRoute resources. You can associate different TLS certificates with different hostnames, and Envoy will automatically select the appropriate certificate during the TLS handshake using SNI. This enables secure, multi-domain ingress with clean separation and centralized management—all declaratively configured in Kubernetes.
 
 ---
 
@@ -36,7 +36,7 @@ Envoy Gateway supports SNI-based TLS routing using the Kubernetes Gateway API wi
 - Create a ServiceAccount, a Service and a Deployment for the `backend-sni` application
 - Create a Gateway resource
 - Create an HTTPRoute `backend-sni` which routes traffic to the `backend-sni` service
-- Retrieve the external IP of the Envoy Gateway and **test** with no certificate
+- Retrieve the external IP of the gateway and **test** with no certificate
 - Generate self-signed RSA derived Server certificate and private key, and configure those in the Gateway listener configuration to terminate HTTPS traffic for `example.com`
 - Update the Gateway to include an HTTPS listener that listens on port 443 and references the `example-cert` Secret
 - Query the example app through the Gateway on port 443 and validate the server's certificate using `example.com.crt`
@@ -160,7 +160,7 @@ This sections gives a walkthrough to generate multiple certificates correspondin
   sleep 30
   ```
 
-#### 5. Retrieve the external IP of the Envoy Gateway
+#### 5. Retrieve the external IP of the gateway
 
   ```
   export GATEWAY_SNI_DEMO=$(kubectl get gateway/sni-gateway -o jsonpath='{.status.addresses[0].value}')

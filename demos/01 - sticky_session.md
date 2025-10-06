@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 Session Persistence allows client requests to be consistently routed to the same backend service instance. This is useful in many scenarios, such as when an application needs to maintain state across multiple requests.
 
-In Kubernetes with Envoy Gateway, session persistence can be achieved using a session identifier (e.g., a cookie or header). This ensures that a client’s traffic is consistently routed to the same pod for the duration of the session, preserving user context and improving user experience. 
+In Kubernetes with Calico Ingress Gateway, session persistence can be achieved using a session identifier (e.g., a cookie or header). This ensures that a client’s traffic is consistently routed to the same pod for the duration of the session, preserving user context and improving user experience. 
 
 Use session persistence when your app is stateful and you need explicit control over session lifecycle (e.g., login sessions, sticky shopping carts).
 
@@ -38,7 +38,7 @@ Use session persistence when your app is stateful and you need explicit control 
 - Create a deployment named Backend which we will use to test sticky session / session persistence. The deployment will have 4 replicas.
 - Create a Gateway resource named "sticky-session-gateway" using the "tigera-gateway-class"
 - Create the http route to configure the session persistence 
-- Retrieve the external IP of the Envoy Gateway and **test**
+- Retrieve the external IP of the gateway and **test**
 
 ### Diagram
 
@@ -153,7 +153,7 @@ Coming Soon in v2
   sleep 30
   ```
 
-#### 5. Retrieve the external IP of the Envoy Gateway
+#### 5. Retrieve the external IP of the gateway
 
   ```
   export GATEWAY_STICKY_DEMO=$(kubectl get gateway/sticky-session-gateway -o jsonpath='{.status.addresses[0].value}')

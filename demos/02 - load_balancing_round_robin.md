@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 A common use case for round-robin load balancing is distributing incoming traffic evenly across multiple instances of a stateless web application to maximize resource utilization and ensure high availability.
 
-In Kubernetes with Envoy Gateway, round-robin is one of the default load balancing strategies used by Envoy to forward requests to backend pods. When configured (e.g., via `BackendRef` in `HTTPRoute` or a `Service`), Envoy will cycle through available backend endpoints, sending each new request to the next pod in line, ensuring a balanced distribution without overloading any single instance.
+In Kubernetes with Calico Ingress Gateway, round-robin is one of the default load balancing strategies used by Envoy to forward requests to backend pods. When configured (e.g., via `BackendRef` in `HTTPRoute` or a `Service`), Envoy will cycle through available backend endpoints, sending each new request to the next pod in line, ensuring a balanced distribution without overloading any single instance.
 
 ---
 
@@ -36,7 +36,7 @@ In Kubernetes with Envoy Gateway, round-robin is one of the default load balanci
 - Create a deployment named Backend which we will use to test round robin load balancing. The deployment will have 4 replicas.
 - Create a Gateway resource
 - Create the backend traffic policy and the http route to configure the load balancing
-- Retrieve the external IP of the Envoy Gateway and **test**
+- Retrieve the external IP of the gateway and **test**
 
 ### Diagram
 
@@ -163,7 +163,7 @@ Coming Soon in v2
   sleep 30
   ```
 
-#### 5. Retrieve the external IP of the Envoy Gateway
+#### 5. Retrieve the external IP of the gateway
 
   ```
   export GATEWAY_LB_DEMO=$(kubectl get gateway/load-balancing-gateway -o jsonpath='{.status.addresses[0].value}')

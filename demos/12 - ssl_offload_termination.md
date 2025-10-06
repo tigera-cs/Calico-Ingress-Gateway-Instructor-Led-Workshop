@@ -36,7 +36,7 @@ Calico Ingress Gateway supports TLS termination for TCP traffic through the Gate
 - Create a ServiceAccount, a Service and a Deployment for the `backend-ssl-offload` application
 - Create a Gateway resource
 - Create an HTTPRoute `backend-ssl-offload` which routes traffic to the `backend-ssl-offload` service
-- Retrieve the external IP of the Envoy Gateway and **test** with no certificate
+- Retrieve the external IP of the gateway and **test** with no certificate
 - Create a root certificate and private key to sign certificates
 - Create a certificate and a private key for `www.example.com`
 - Store the cert/key in a Secret
@@ -160,7 +160,7 @@ This demo will walk through the steps required to configure TLS Terminate mode f
   sleep 30
   ```
 
-#### 5. Retrieve the external IP of the Envoy Gateway
+#### 5. Retrieve the external IP of the gateway
 
   ```
   export GATEWAY_SSL_OFFLOAD_DEMO=$(kubectl get gateway/ssl-offload-gateway -o jsonpath='{.status.addresses[0].value}')

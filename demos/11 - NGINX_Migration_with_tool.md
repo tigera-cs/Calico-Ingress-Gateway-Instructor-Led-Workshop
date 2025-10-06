@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 Organizations migrate from the older Ingress API to the newer Gateway API because Gateway API offers more flexibility, better extensibility, and clearer separation of concerns for managing traffic routing in Kubernetes. 
 
-In real-world scenarios, authentication mechanisms (like OIDC, JWT, Basic Auth) are often enforced at the ingress layer to secure applications. To simulate this during migration, They can be implemented in Envoy Gateway using Envoy’s `SecurityPolicy` or authentication filters, ensuring that security controls are preserved while adopting the more powerful Gateway API.
+In real-world scenarios, authentication mechanisms (like OIDC, JWT, Basic Auth) are often enforced at the ingress layer to secure applications. To simulate this during migration, They can be implemented in Calico Ingress Gateway using Envoy’s `SecurityPolicy` or authentication filters, ensuring that security controls are preserved while adopting the more powerful Gateway API.
 
 ***Because OIDC is more complex to setup, for the scope of the demo, we are going to use Basic Auth. However, for a more realistic authentication such as OIDC, steps are the same.***
 

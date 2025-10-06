@@ -31,7 +31,7 @@ Active-passive failover in an API gateway setup is like having a backup plan in 
 - Lower Costs: In an active-passive setup, the fallback backend doesn’t need to work all the time—it’s just on standby. This can save on costs (like cloud egress costs) compared to setups where both backend are running at full capacity.
 - Peace of Mind with Redundancy: Although the fallback backend isn’t handling traffic daily, it’s there as a safety net. If something happens with the primary backend, the backup can take over immediately, ensuring your service doesn’t skip a beat.
 
-In Kubernetes with Envoy Gateway, failover is handled by configuring multiple backend references with health checks and prioritized or weighted routing. If the primary backend fails (e.g., fails readiness or liveness probes), Envoy automatically routes traffic to a secondary (failover) backend, keeping the service online without manual intervention.
+In Kubernetes with Calico Ingress Gateway, failover is handled by configuring multiple backend references with health checks and prioritized or weighted routing. If the primary backend fails (e.g., fails readiness or liveness probes), Envoy automatically routes traffic to a secondary (failover) backend, keeping the service online without manual intervention.
 
 ---
 
@@ -42,7 +42,7 @@ In Kubernetes with Envoy Gateway, failover is handled by configuring multiple ba
 - Create a Gateway resource
 - Create the `BackendTrafficPolicy` with a passive health check setting to detect an transient errors
 - Create the `HTTPRoute` that can route to both backends
-- Retrieve the external IP of the Envoy Gateway and **test**
+- Retrieve the external IP of the gateway and **test**
 
 ### Diagram
 
@@ -260,7 +260,7 @@ Coming Soon in v2
   sleep 30
   ```
 
-#### 5. Retrieve the external IP of the Envoy Gateway
+#### 5. Retrieve the external IP of the gateway
 
   ```
   export GATEWAY_HA_DEMO=$(kubectl get gateway/ha-failover-gateway -o jsonpath='{.status.addresses[0].value}')

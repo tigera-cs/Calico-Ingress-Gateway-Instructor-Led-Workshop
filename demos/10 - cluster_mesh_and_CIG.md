@@ -70,7 +70,7 @@ Calico Ingress Gateway can be integrated with Calico Cluster-Mesh to enable high
 
 - Create a Gateway resource
 - Define an `HTTPRoute` to split traffic between `backend-app` in us-east (local k8s cluster) and `backend-app` in us-west (remote k3s cluster)
-- Retrieve the external IP of the Envoy Gateway and **test**
+- Retrieve the external IP of the gateway and **test**
 
 ### Diagram
 
@@ -135,12 +135,12 @@ The HTTPRoute below routes 99% of requests to the local cluster `us-east` and 1%
   sleep 30
   ```
 
-#### 4. Retrieve the external IP of the Envoy Gateway
+#### 4. Retrieve the external IP of the gateway
 
   ```
   EXTERNAL_IP=$(kubectl get service -n tigera-gateway -l gateway.envoyproxy.io/owning-gateway-name=cluster-mesh-gateway \
     -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
-  echo "Envoy Gateway External IP: $EXTERNAL_IP"
+  echo "Gateway External IP: $EXTERNAL_IP"
   ```
 
 #### 5. Test

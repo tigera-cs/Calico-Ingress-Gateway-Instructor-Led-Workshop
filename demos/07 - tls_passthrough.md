@@ -28,7 +28,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 TLS passthrough is used when you want to let encrypted TLS traffic pass through the gateway without terminating (decrypting) it at the proxy. This is common for workloads that handle their own TLS termination internally—like databases or services requiring end-to-end encryption—so the gateway just forwards raw TLS packets directly to the backend.
 
 
-Envoy Gateway supports TLS passthrough by routing TCP connections without terminating TLS, typically configured via `TLSRoute` in the Kubernetes Gateway API. This allows Envoy to forward encrypted traffic transparently to backend services that manage their own TLS certificates, preserving end-to-end security while enabling centralized traffic routing and control.
+Calico Ingress Gateway supports TLS passthrough by routing TCP connections without terminating TLS, typically configured via `TLSRoute` in the Kubernetes Gateway API. This allows Envoy to forward encrypted traffic transparently to backend services that manage their own TLS certificates, preserving end-to-end security while enabling centralized traffic routing and control.
 
 ---
 

@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 TCP routing is used when applications communicate over raw TCP connections rather than HTTP, such as databases (PostgreSQL, MySQL), message brokers (Redis, MQTT), or custom TCP-based protocols. In Kubernetes, managing access to these services externally—especially with advanced traffic control or multi-tenant routing—requires TCP-aware solutions.
 
-Envoy Gateway supports TCP routing via Kubernetes Gateway API (e.g., `TCPRoute`), enabling layer 4 (L4) routing for TCP traffic. This allows you to define rules that forward TCP connections to specific backends (like a DB service) based on port or other connection parameters, offering centralized, declarative control over TCP traffic across services.
+Calico Ingress Gateway supports TCP routing via Kubernetes Gateway API (e.g., `TCPRoute`), enabling layer 4 (L4) routing for TCP traffic. This allows you to define rules that forward TCP connections to specific backends (like a DB service) based on port or other connection parameters, offering centralized, declarative control over TCP traffic across services.
 
 ---
 
@@ -36,7 +36,7 @@ Envoy Gateway supports TCP routing via Kubernetes Gateway API (e.g., `TCPRoute`)
 - Create two services foo and bar, which are bound to backend-1 and backend-2 deployments.
 - Create a Gateway resource. The gateway will have 2 listeners: 1 per TCP port.
 - Create two TCPRoutes tcp-app-1 and tcp-app-2 with different sectionName.
-- Retrieve the external IP of the Envoy Gateway and **test**
+- Retrieve the external IP of the gateway and **test**
 
 ### Diagram
 
@@ -214,7 +214,7 @@ In this example, we have one Gateway resource and two TCPRoute resources that di
   sleep 30
   ```
 
-#### 5. Retrieve the external IP of the Envoy Gateway
+#### 5. Retrieve the external IP of the gateway
 
   ```
   export GATEWAY_TCP_DEMO=$(kubectl get gateway/tcp-routing-gateway -o jsonpath='{.status.addresses[0].value}')

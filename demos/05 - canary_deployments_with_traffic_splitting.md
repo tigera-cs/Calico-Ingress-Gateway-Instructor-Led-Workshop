@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 A canary deployment is a progressive release strategy where a new version of an application is gradually rolled out to a small subset of users before a full release. This allows teams to monitor for issues and roll back if necessary with minimal impact.
 
-In Kubernetes using Envoy Gateway, canary deployments can be implemented through traffic splitting. This means you configure routing rules (e.g., via HTTPRoute) to send a specific percentage of traffic to the new version (the canary) and the rest to the stable version. Over time, the percentage can be increased as confidence in the new version grows.
+In Kubernetes using Calico Ingress Gateway, canary deployments can be implemented through traffic splitting. This means you configure routing rules (e.g., via HTTPRoute) to send a specific percentage of traffic to the new version (the canary) and the rest to the stable version. Over time, the percentage can be increased as confidence in the new version grows.
 
 ---
 
@@ -37,7 +37,7 @@ In Kubernetes using Envoy Gateway, canary deployments can be implemented through
 - Deploy a gateway resource
 - Define an HTTPRoute to split traffic between app-v1 and app-v2
 - Create a ReferenceGrant to allow HTTPRoute in the default namespace to reference services in my-app namespace
-- Retrieve the external IP of the Envoy Gateway and **test**
+- Retrieve the external IP of the gateway and **test**
 
 ### Diagram
 
@@ -266,12 +266,12 @@ The HTTPRoute below routes 80% of requests to app-v1 and 20% to app-v2
   sleep 30
   ```
 
-#### 8. Retrieve the external IP of the Envoy Gateway
+#### 8. Retrieve the external IP of the gateway
 
   ```
   EXTERNAL_IP=$(kubectl get service -n tigera-gateway -l gateway.envoyproxy.io/owning-gateway-name=canary-deployment-gateway \
     -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
-  echo "Envoy Gateway External IP: $EXTERNAL_IP"
+  echo "Gateway External IP: $EXTERNAL_IP"
   ```
 
 #### 9. Test

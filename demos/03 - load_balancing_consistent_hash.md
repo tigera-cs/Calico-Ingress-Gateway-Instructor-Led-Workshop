@@ -27,7 +27,7 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 A typical use case for consistent hash load balancing is routing requests from the same client to the same backend pod to maintain session affinity—for example, in a shopping cart or user session scenario.
 
-In Kubernetes with Envoy Gateway, consistent hashing can be configured so that requests are distributed based on a hash of a key (like a cookie, HTTP header, or client IP). Envoy calculates the hash and routes each request to a specific backend, ensuring that the same client consistently lands on the same pod, improving cache hit rates and preserving session state.
+In Kubernetes with Calico Ingress Gateway, consistent hashing can be configured so that requests are distributed based on a hash of a key (like a cookie, HTTP header, or client IP). Envoy calculates the hash and routes each request to a specific backend, ensuring that the same client consistently lands on the same pod, improving cache hit rates and preserving session state.
 
 ---
 
@@ -36,7 +36,7 @@ In Kubernetes with Envoy Gateway, consistent hashing can be configured so that r
 - Create a deployment named Backend which we will use to test consistent hash load balancing. The deployment will have 10 replicas.
 - Create a Gateway resource
 - Create the backend traffic policy and the http route to configure the load balancing. For the sticky load balancing, we will use cookies
-- Retrieve the external IP of the Envoy Gateway and **test**
+- Retrieve the external IP of the gateway and **test**
 
 ### Diagram
 
@@ -170,7 +170,7 @@ Coming Soon in v2
   sleep 30
   ```
 
-#### 5. Retrieve the external IP of the Envoy Gateway
+#### 5. Retrieve the external IP of the gateway
 
   ```
   export GATEWAY_LB_DEMO=$(kubectl get gateway/load-balancing-gateway -o jsonpath='{.status.addresses[0].value}')
