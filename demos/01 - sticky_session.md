@@ -25,11 +25,21 @@ We hope you enjoyed the presentation! Feel free to download the slides:
 
 ### Overview
 
-Session Persistence allows client requests to be consistently routed to the same backend service instance. This is useful in many scenarios, such as when an application needs to maintain state across multiple requests.
+Session Persistence allows client requests to be consistently routed to the same backend service instance. This ensures that the user’s state or context is maintained across multiple requests, which is essential for applications that rely on session-specific data.
 
-In Kubernetes with Calico Ingress Gateway, session persistence can be achieved using a session identifier (e.g., a cookie or header). This ensures that a client’s traffic is consistently routed to the same pod for the duration of the session, preserving user context and improving user experience. 
+In Kubernetes with Calico Ingress Gateway, session persistence can be implemented using a session identifier, such as a cookie or a custom header. This mechanism ensures that all requests from a particular client are routed to the same pod for the duration of their session, preventing data inconsistencies and improving overall user experience.
 
-Use session persistence when your app is stateful and you need explicit control over session lifecycle (e.g., login sessions, sticky shopping carts).
+#### Real-World Use Cases
+
+- **User Authentication:** Login sessions often require that a user’s requests are handled by the same backend instance to maintain session tokens and authentication state.
+
+- **E-Commerce Shopping Carts:** Ensures that items added to a cart are consistently available across pages without requiring frequent database lookups.
+
+- **Online Gaming or Collaboration Tools:** Maintains game state or live document sessions, avoiding interruptions caused by switching backend instances.
+
+- **Personalized Dashboards:** Applications that generate dynamic, session-specific content benefit from persistent routing to reduce latency and improve performance.
+
+Use session persistence when your application is stateful and requires explicit control over the session lifecycle, as it helps maintain continuity, reduces errors, and enhances the end-user experience.
 
 ---
 
