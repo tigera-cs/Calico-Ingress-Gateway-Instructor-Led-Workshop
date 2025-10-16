@@ -40,7 +40,7 @@ Calico Ingress Gateway, uses the `HTTPRoute` resource to define path-based routi
 
 ### Diagram
 
-Coming Soon in v2
+![Path-Based Routing Diagram](../etc/path_diagram.png)
 
 
 ### Demo
