@@ -35,7 +35,7 @@ Calico Ingress Gateway, uses the `HTTPRoute` resource to define path-based routi
 
 - Create four services example, foo, bar and bar-canary, which are bound to example-backend, foo-backend, bar-backend and bar-canary-backend deployments.
 - Create a Gateway resource
-- Create three TCPRoutes example-route, foo-route and bar-route with different hostnames, rules and paths. Note that the bar-route will have 2 separate backendRefs for bar and bar-canary services
+- Create three HTTPRoute example-route, foo-route and bar-route with different hostnames, rules and paths. Note that the bar-route will have 2 separate backendRefs for bar and bar-canary services
 - Retrieve the external IP of the Gateway and **test**
 
 ### Diagram
@@ -45,10 +45,10 @@ Calico Ingress Gateway, uses the `HTTPRoute` resource to define path-based routi
 
 ### Demo
 
-In this example, we have one Gateway resource and two TCPRoute resources that distribute the traffic with the following rules:
-- All TCP streams on port 8088 of the Gateway are forwarded to port 3001 of `foo` Kubernetes Service
-- All TCP streams on port 8089 of the Gateway are forwarded to port 3002 of `bar` Kubernetes Service
-- Two TCP listeners will be applied to the Gateway in order to route them to two separate backend TCPRoutes, note that the protocol set for the listeners on the Gateway is TCP.
+In this example, we have one Gateway resource and three HTTPRoute resources that distribute the traffic with the following rules:
+- `example-route`: Routes all traffic for `example.com` to the example-svc service on port 8080.
+- `foo-route`: Routes requests to `foo.example.com/login` to the foo-svc service on port 8080.
+- `bar-route`: Routes `bar.example.com` traffic with header `env: canary` to bar-canary-svc, and all other traffic to bar-svc, both on port 8080.
 
 #### 1. Create four services `example`, `foo`, `bar` and `bar-canary`, which are bound to `example-backend`, `foo-backend`, `bar-backend` and `bar-canary-backend` deployments.
 
@@ -261,7 +261,7 @@ In this example, we have one Gateway resource and two TCPRoute resources that di
   EOF
   ```
 
-#### 3. Create three TCPRoutes `example-route`, `foo-route` and `bar-route` with different `hostnames`, `rules` and `paths`. Note that the `bar-route` will have 2 separate `backendRefs` for `bar` and `bar-canary` services:
+#### 3. Create three HTTPRoute `example-route`, `foo-route` and `bar-route` with different `hostnames`, `rules` and `paths`. Note that the `bar-route` will have 2 separate `backendRefs` for `bar` and `bar-canary` services:
   ```
   kubectl apply -f - <<EOF
   apiVersion: gateway.networking.k8s.io/v1
