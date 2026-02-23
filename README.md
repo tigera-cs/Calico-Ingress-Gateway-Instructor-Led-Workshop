@@ -66,10 +66,6 @@ For more details, see the official documentation: [Configure an ingress gateway]
 ![GatewayAPI Diagram](etc/gatewayAPI_diagram.png)
 
 
-### Lab Topology
-
-![Lab Topology](etc/image.png)
-
 
 ### Before you begin...
 
@@ -78,6 +74,10 @@ For more details, see the official documentation: [Configure an ingress gateway]
 * Supported CE/CC versions:
   - Calico Enterprise v3.21.X
   - Calico Cloud 21.X
+
+### Lab Topology
+
+![Lab Topology](etc/image.png)
 
 ### Prerequisite & lab setup
 
