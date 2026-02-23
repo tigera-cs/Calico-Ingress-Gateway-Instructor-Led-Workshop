@@ -65,6 +65,12 @@ For more details, see the official documentation: [Configure an ingress gateway]
 
 ![GatewayAPI Diagram](etc/gatewayAPI_diagram.png)
 
+
+### Lab Topology
+
+![Lab Topology](etc/image.png)
+
+
 ### Before you begin...
 
 **IMPORTANT**
